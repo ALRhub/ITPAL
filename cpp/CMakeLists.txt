@@ -18,11 +18,11 @@ link_directories(~/projects/eim_lib/nlopt/lib)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -llapack")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -llapack")
 include_directories(include)
 
 #Projection

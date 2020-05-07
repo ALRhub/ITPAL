@@ -9,9 +9,8 @@ import time as t
 np.random.seed(0)
 
 
-num_gaussians = 64
-dim = 50
-
+num_gaussians = 1 
+dim = 16
 
 old_dists = []
 target_dists = []
@@ -56,10 +55,10 @@ print("py", t.time() - t0)
 
 
 
-for i in range(num_gaussians):
-    print(np.max(np.abs(projeted_dists_py[i].mean - projeted_dists_cpp[i].mean)))
-    print(np.max(np.abs(projeted_dists_py[i].covar - projeted_dists_cpp[i].covar)))
-    print(i, projeted_dists_cpp[i].kl(old_dists[i]), old_dists[i].entropy() - projeted_dists_cpp[i].entropy())
+#for i in range(num_gaussians):
+#    print(np.max(np.abs(projeted_dists_py[i].mean - projeted_dists_cpp[i].mean)))
+#    print(np.max(np.abs(projeted_dists_py[i].covar - projeted_dists_cpp[i].covar)))
+#    print(i, projeted_dists_cpp[i].kl(old_dists[i]), old_dists[i].entropy() - projeted_dists_cpp[i].entropy())
 
 
-print("bla")
+#print("bla")

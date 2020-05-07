@@ -11,8 +11,8 @@ from projection.MoreProjection import MoreProjection
 #m2 = np.array([0.3, -0.6])
 #c2 = np.array([[0.4, 0.05],
 #               [0.05, 0.2]])
-np.random.seed(2)
-dim = 5
+np.random.seed(1)
+dim = 4
 
 mean_old = np.random.uniform(low=-1, high=1, size=dim)
 cov_old = sample_sympd(dim)
@@ -42,7 +42,7 @@ def eval_fn(p, eps, beta):
 
 p0 = np.concatenate([q_target.lin_term, np.reshape(q_target.precision, [-1])], axis=-1)
 
-def test(eps, beta_loss):
+def run_test(eps, beta_loss):
     beta = q_old.entropy() - beta_loss
     new_mean, new_cov = proj_more.more_step(eps, beta, q_old.mean, q_old.covar,
                                             q_target.mean, q_target.covar)
@@ -52,22 +52,29 @@ def test(eps, beta_loss):
     omega = proj_more.last_omega
     print("Eta", eta, "Omega", omega)
     numerical_grads = central_differences(lambda p: eval_fn(p, eps, beta), p0, dim=2, delta=1e-9)
-
+    print("analytical", deq)
+    print("numerical", numerical_grads[0, :dim])
+    print("fraction", numerical_grads[0, :dim] / deq)
     print("d_eta d_q", np.max(np.abs(numerical_grads[0, :dim] - deq)))
-    print("d_eta d_Q", np.max(np.abs(np.reshape(numerical_grads[0, dim:], [dim, dim]) - deQ)))
+    #print("d_eta d_Q", np.max(np.abs(np.reshape(numerical_grads[0, dim:], [dim, dim]) - deQ)))
+    print("analytical", doq)
+    print("numerical", numerical_grads[1, :dim])
+    print("fraction", numerical_grads[1, :dim] / doq)
     print("d_omega d_q", np.max(np.abs(numerical_grads[1, :dim] - doq)))
-    print("d_omega d_Q", np.max(np.abs(np.reshape(numerical_grads[1, dim:], [dim, dim]) - doQ)))
+    #print("d_omega d_Q", np.max(np.abs(np.reshape(numerical_grads[1, dim:], [dim, dim]) - doQ)))
 
 print("--------BOTH INACTIVE------------------")
-test(eps=10.0, beta_loss=10.0)
+#run_test(eps=10.0, beta_loss=10.0)
 
 print("--------ENTROPY ACTIVE------------------")
-test(eps=10.0, beta_loss=0.01)
+#run_test(eps=10.0, beta_loss=0.01)
 
 
 print("--------KL ACTIVE------------------")
-test(eps=0.01, beta_loss=10.0)
+#run_test(eps=0.01, beta_loss=10.0)
 
+print("--------Both ACTIVE------------------")
+run_test(eps=0.01, beta_loss=0.01)
 
 
 """

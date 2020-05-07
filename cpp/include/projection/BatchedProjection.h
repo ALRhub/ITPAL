@@ -5,6 +5,7 @@
 #include <nlopt.hpp>
 #include <NlOptUtil.h>
 #include <projection/MoreProjection.h>
+#include <cblas.h>
 
 using namespace arma;
 

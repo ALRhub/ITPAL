@@ -8,8 +8,8 @@ BatchedProjection::BatchedProjection(uword batch_size, uword dim) : batch_size(b
         projectors.emplace_back(MoreProjection(dim));
         projection_applied.emplace_back(false);
     }
-    entropy_const_part = 0.5 * (dim * log(2 * M_PI * M_E));
-
+    entropy_const_part = 0.5 * (dim * log(2 * M_PI * M_E)); 
+    openblas_set_num_threads(1);
 }
 
 std::tuple<mat, cube> BatchedProjection::more_step(const vec &epss, const vec &betas,
@@ -20,7 +20,7 @@ std::tuple<mat, cube> BatchedProjection::more_step(const vec &epss, const vec &b
     cube covs(size(old_covars));
     auto start = high_resolution_clock::now();
 
-    #pragma omp parallel for default(none) shared(epss, betas, old_means, old_covars, target_means, target_covars, means, covs)
+#pragma omp parallel for default(none) schedule(static) shared(epss, betas, old_means, old_covars, target_means, target_covars, means, covs)
     for (int i = 0; i < batch_size; ++i) {
         double eps = epss.at(i);
         double beta = betas.at(i);
