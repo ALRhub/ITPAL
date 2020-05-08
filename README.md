@@ -5,7 +5,7 @@ implement full gradients for variance (maybe even cholesky?)
 implement gradients in c++ (first check what we actually need for tensorflow)
 
 
-##Code Structure:
+## Code Structure:
 
 ##### python:
    
