@@ -1,16 +1,18 @@
 from util.Gaussian import Gaussian
 import numpy as np
 from util.sample import sample_sympd
-#import projection
+
 from projection.MoreProjection import MoreProjection
 import cpp_projection as projection
 import time as t
 
+"""benchmark and regression test python and cpp versions"""
+
 np.random.seed(0)
 
 
-num_gaussians = 1 
-dim = 16
+num_gaussians = 1024
+dim = 100
 
 old_dists = []
 target_dists = []
@@ -51,14 +53,10 @@ for i in range(num_gaussians):
 
 print("py", t.time() - t0)
 
-
-
-
-
+"""uncomment for regression tests between python and c++"""
 #for i in range(num_gaussians):
 #    print(np.max(np.abs(projeted_dists_py[i].mean - projeted_dists_cpp[i].mean)))
 #    print(np.max(np.abs(projeted_dists_py[i].covar - projeted_dists_cpp[i].covar)))
 #    print(i, projeted_dists_cpp[i].kl(old_dists[i]), old_dists[i].entropy() - projeted_dists_cpp[i].entropy())
 
 
-#print("bla")

@@ -1,5 +1,5 @@
 import numpy as np
-from util.Gaussian import Gaussian
+from util import Gaussian
 from util.central_differences import central_differences
 from util.sample import sample_sympd
 from projection.MoreProjection import MoreProjection

@@ -9,6 +9,7 @@ BatchedProjection::BatchedProjection(uword batch_size, uword dim) : batch_size(b
         projection_applied.emplace_back(false);
     }
     entropy_const_part = 0.5 * (dim * log(2 * M_PI * M_E)); 
+
     openblas_set_num_threads(1);
 }
 

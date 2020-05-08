@@ -3,6 +3,8 @@ from util.sample import sample_sympd
 from util.Gaussian import Gaussian
 dim = 10
 
+""" Test for the KL based on natural parametrization"""
+
 def np_kl(lin1, prec1, lin2, prec2):
     ld_terms = - np.linalg.slogdet(prec2)[1] + np.linalg.slogdet(prec1)[1]
     trace_term = np.trace(prec2 @ np.linalg.inv(prec1))

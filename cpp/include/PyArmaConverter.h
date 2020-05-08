@@ -6,7 +6,7 @@
 #include <armadillo>
 
 /*** CAVEAT: All Matrices  (and Cubes) are implicitly transposed when going from c++ to python and vice versa.
- *  This is done to account for armadillos colom-major and numpys/tensorflows row-major storage without losing performance
+ *  This is done to account for armadillos column-major and numpys/tensorflows row-major storage without losing performance
  *  CAVEAT2: I check more or less nothing while parsing - so some caution is required by the user
  ***/
 

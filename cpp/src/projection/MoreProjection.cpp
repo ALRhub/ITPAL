@@ -56,7 +56,6 @@ std::tuple<vec, mat> MoreProjection::more_step(double eps, double beta,
 
         vec new_lin = (eta * old_lin + target_lin) / (eta + omega + omega_offset);
         mat new_covar = inv_sympd((eta * old_precision + target_precision) / (eta + omega + omega_offset));
-        //std::tie(new_lin, new_covar) = new_params_internal(eta, omega);
         res_txt = " ";
         res = std::make_tuple(new_covar * new_lin, new_covar);
     } else{
@@ -68,28 +67,6 @@ std::tuple<vec, mat> MoreProjection::more_step(double eps, double beta,
     }
     return res;
 }
-
-/*
-std::tuple<vec, mat> MoreProjection::new_params_internal(double eta, double omega) {
-    omega = constrain_entropy ? omega : 0.0;
-    vec new_lin = ((eta + eta_offset) * old_lin + reward_lin) / (eta + eta_offset + omega + omega_offset);
-    mat new_covar;
-    while (eta < 1e12) {
-        try {
-            new_covar = inv_sympd((eta + eta_offset) * old_precision + reward_quad) * (eta + eta_offset + omega + omega_offset);
-            break;
-        } catch (std::runtime_error &err) {
-            if (eta < 1e-12){
-                eta = 1e-12;
-            }
-            eta *= 1.1;
-            eta_inc_ct++;
-        }
-    }
-    return std::make_tuple(new_lin, new_covar);
-
-}
-*/
 
 double MoreProjection::dual(std::vector<double> const &eta_omega, std::vector<double> &grad){
     eta = eta_omega[0] > 0.0 ? eta_omega[0] : 0.0;

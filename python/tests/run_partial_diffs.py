@@ -2,9 +2,12 @@ from util.central_differences import central_differences
 from util.sample import sample_sympd
 import numpy as np
 
+""" Test for the partial derivatives in section 2.1.1 of the document"""
+
+
 np.random.seed(0)
 
-dim = 2
+dim = 10
 
 q_old = np.random.normal(size=dim)
 Q_old = sample_sympd(dim)
@@ -27,10 +30,7 @@ def m1_term(q, Q_flat):
 
 def m2_term(q, Q_flat):
     Q_inv = np.linalg.inv(np.reshape(Q_flat, [dim, dim]))
-    #Q = np.reshape(Q_flat, [dim, dim])
     return np.dot(q, Q_inv @ Q_old @ Q_inv @ q)
-    #return np.dot(q, Q @ Q_old @ Q @ q)
-
 
 
 q = np.random.normal(size=dim)

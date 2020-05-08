@@ -2,7 +2,9 @@ from util.central_differences import central_differences
 from util.sample import sample_sympd
 import numpy as np
 from projection.MoreProjection import MoreProjection
-#import tesnsorflow as tf
+
+"""test full gradients output distribution w.r.t input distribution and backward pass"""
+
 np.random.seed(0)
 
 dim = 3
@@ -49,13 +51,13 @@ print(np.max(np.abs(np.reshape(grad_numeric, [dim, dim]) - grad_analytic)))
 
 print("d_mu d_mutarget")
 proj_more = MoreProjection(dim)
-t = np.random.normal(size=dim)
+err_mean = np.random.normal(size=dim)
 
 proj_mean, proj_cov = proj_more.more_step(0.1, -5.0, mean_old, cov_old, mean_target, cov_target)
 #print(proj_more.last_eta, proj_more.last_omega)
 grad_analytic, _ = proj_more.get_last_full_grad()
-print("grad analytic, t", t.T @ grad_analytic)
-print("backward", proj_more.backward(t, np.zeros([dim, dim]))[0])
+print("grad analytic, t", err_mean.T @ grad_analytic)
+print("backward", proj_more.backward(err_mean, np.zeros([dim, dim]))[0])
 print("grad analytic", grad_analytic)
 
 

@@ -8,10 +8,10 @@ find_library(gfortran REQUIRED)
 find_library(openblas REQUIRED)
 find_library(lapack REQUIRED)
 ### FOR INSTALLATION CHANGE STUFF HERE! ###################################
-#Add pybind11 subfolder (under CppGenerator) or change command if pybind11 installed on system
+#Add pybind11 subfolder (under cpp) or change command if pybind11 installed on system
 add_subdirectory(pybind11)
 
-#Adapt these so that armadillo, nlopt and openblas are found
+#Adapt these so that armadillo and nlopt are found
 include_directories(~/projects/eim_lib/armadillo/include ~/projects/eim_lib/nlopt/include)
 link_directories(~/projects/eim_lib/nlopt/lib)
 ### END OF STUFF THE NEEDS TO BE CHANGED ##################################
@@ -20,7 +20,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -llapack")
 include_directories(include)
