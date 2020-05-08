@@ -15,7 +15,7 @@ contains reference implementation for non-batched projection (projection), tests
 containes tuned implementation for non-batched projection (MoreProjection.cpp/h) and batched-projection
  (BatchedProjection.cpp/h). The latter uses the former and is parallelized using openmp.
  
- Interface to python is provided using pybind11 (PyProject.py), conversion for numpy arrays to aramdillo vec/mat/ cube is provided
+ Interface to python is provided using pybind11 (PyProject.cpp), conversion for numpy arrays to aramdillo vec/mat/ cube is provided
  in PyArmaConverter.h
     
 Note that the C++ part uses column-major layout while the python part uses row-major
