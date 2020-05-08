@@ -52,16 +52,17 @@ def run_test(eps, beta_loss):
     omega = proj_more.last_omega
     print("Eta", eta, "Omega", omega)
     numerical_grads = central_differences(lambda p: eval_fn(p, eps, beta), p0, dim=2, delta=1e-9)
-    print("analytical", deq)
-    print("numerical", numerical_grads[0, :dim])
-    print("fraction", numerical_grads[0, :dim] / deq)
+    #print("analytical", deq)
+    #print("numerical", numerical_grads[0, :dim])
+    #print("fraction", numerical_grads[0, :dim] / deq)
     print("d_eta d_q", np.max(np.abs(numerical_grads[0, :dim] - deq)))
-    #print("d_eta d_Q", np.max(np.abs(np.reshape(numerical_grads[0, dim:], [dim, dim]) - deQ)))
-    print("analytical", doq)
-    print("numerical", numerical_grads[1, :dim])
-    print("fraction", numerical_grads[1, :dim] / doq)
+    print("d_eta d_Q", np.max(np.abs(np.reshape(numerical_grads[0, dim:], [dim, dim]) - deQ)))
+    #print("analytical", doq)
+    #print("numerical", numerical_grads[1, :dim])
+    #print("fraction", numerical_grads[1, :dim] / doq)
     print("d_omega d_q", np.max(np.abs(numerical_grads[1, :dim] - doq)))
-    #print("d_omega d_Q", np.max(np.abs(np.reshape(numerical_grads[1, dim:], [dim, dim]) - doQ)))
+    print(doQ)
+    print("d_omega d_Q", np.max(np.abs(np.reshape(numerical_grads[1, dim:], [dim, dim]) - doQ)))
 
 print("--------BOTH INACTIVE------------------")
 #run_test(eps=10.0, beta_loss=10.0)
@@ -71,10 +72,10 @@ print("--------ENTROPY ACTIVE------------------")
 
 
 print("--------KL ACTIVE------------------")
-#run_test(eps=0.01, beta_loss=10.0)
+run_test(eps=0.01, beta_loss=10.0)
 
 print("--------Both ACTIVE------------------")
-run_test(eps=0.01, beta_loss=0.01)
+#run_test(eps=0.01, beta_loss=0.01)
 
 
 """

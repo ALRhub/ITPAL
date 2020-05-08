@@ -120,14 +120,17 @@ class MoreProjection(ITPS):
                    np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
         elif self._eta == 0 and self._omega > 0:     # case 2
-            return np.zeros(self._dim), np.zeros([self._dim, self._dim]), \
-                   np.zeros(self._dim), self._proj_covar / self._dim #(?)
+            at, bt, ct, dt = self._case2_tuned()
+            ab, bb, cb, db = self._case2_baseline()
+            print(np.max(np.abs(cb - ct)), np.max(np.abs(cb - ct)))
+            return at, bt, ct, dt
+
 
         elif self._eta > 0 and self._omega == 0:     # case 3
             ab, bb, cb, db = self._case3_baseline()
-            at, bt, ct, dt = self.case3_tuned2()
+            at, bt, ct, dt = self._case3_baseline2()
             print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)))
-            return at, bt, ct, dt
+            return ab, bb, cb, db
 
         elif self._eta > 0 and self._omega > 0:
             return self._case4_baseline()
@@ -135,6 +138,40 @@ class MoreProjection(ITPS):
 
         else:
             raise AssertionError("WTF?")
+
+    def _case2_baseline(self):
+        dQ_omega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1)**2)
+        lhs = np.trace(self._proj_covar @ dQ_omega)
+        rhs = self._proj_covar / (self._omega + self._eta + 1)
+        domega_dQ = rhs / (- lhs)
+        return np.zeros(self._dim), np.zeros([self._dim, self._dim]), np.zeros(self._dim), domega_dQ
+
+    def _case2_tuned(self):
+        domega_dQ = self._proj_covar / self._dim
+        return np.zeros(self._dim), np.zeros([self._dim, self._dim]), np.zeros(self._dim), domega_dQ
+
+    def _case3_baseline(self):
+        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1) ** 2)
+        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / ((self._omega + self._eta + 1) ** 2)
+
+        dtm1_dq = self._proj_covar @ self._old_lin
+        dtm2_dq = 2 * self._proj_covar @ self._old_precision @ self._proj_covar @ self._proj_lin
+        f2_dq = - 2 * dtm1_dq + dtm2_dq
+
+        dtlogdet_dQ = self._proj_covar
+        dttrace_dQ = - self._proj_covar @ self._old_precision @ self._proj_covar
+        tmp = np.outer(self._proj_lin, self._old_lin)
+        dtm1_dQ = - self._proj_covar @ (0.5 * (tmp + tmp.T)) @ self._proj_covar
+        tmp = self._old_precision @ self._proj_covar @ np.outer(self._proj_lin, self._proj_lin)
+        dtm2_dQ = - self._proj_covar @ (tmp + tmp.T) @ self._proj_covar
+        f2_dQ = dtlogdet_dQ + dttrace_dQ - 2 * dtm1_dQ + dtm2_dQ
+
+        lhs = np.dot(f2_dq, dq_deta) + np.trace(dtm2_dQ @ dQ_deta)
+        rhs_dq = f2_dq / (self._omega + self._eta + 1)
+        rhs_dQ = f2_dQ / (self._omega + self._eta + 1)
+        deta_dq = rhs_dq / (lhs)
+        deta_dQ = rhs_dQ / (lhs)
+        return deta_dq, deta_dQ, np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
     def case3_tuned2(self):
         dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / (self._omega + self._eta + 1)
@@ -208,7 +245,7 @@ class MoreProjection(ITPS):
         deta_dQ = deta_dQ * c_deta_dq
         return deta_dq, deta_dQ, np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
-    def _case3_baseline(self):
+    def _case3_baseline2(self):
         dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1) ** 2)
         dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
                     (self._omega + self._eta + 1) ** 2)
