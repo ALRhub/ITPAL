@@ -12,6 +12,13 @@ def central_differences(fn, x, dim=1,delta=1e-8):
     return grad
 
 
+def directed_central_differences(fn, x, dir, delta=1e-8):
+    #n = np.linalg.norm(dir)
+    #dir = dir / n
+    return (fn(x + delta * dir) - fn(x - delta * dir)) / (2 * delta)
+    #return n * (fn(x + delta * dir) - fn(x - delta * dir)) / (2 * delta)
+
+
 if __name__ == "__main__":
 
     def f(x):
@@ -24,4 +31,5 @@ if __name__ == "__main__":
     for i in range(100):
         x = np.random.uniform(low=-10, high=10)
         print(df(x), central_differences(f, x, delta=1e-8))
+        print(df(x), directed_central_differences(f, x, 1.0, delta=1e-8))
 

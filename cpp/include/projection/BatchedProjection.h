@@ -15,9 +15,11 @@ public:
 
     BatchedProjection(uword batch_size, uword dim);
 
-    std::tuple<mat, cube> more_step(const vec &epss, const vec &betas,
-                                    const mat &old_means, const cube &old_covars,
-                                    const mat &target_means, const cube &target_covars);
+    std::tuple<mat, cube> forward(const vec &epss, const vec &betas,
+                                  const mat &old_means, const cube &old_covars,
+                                  const mat &target_means, const cube &target_covars);
+
+    std::tuple<mat, cube> backward(const mat &d_means, const cube &d_covs);
 
 private:
 

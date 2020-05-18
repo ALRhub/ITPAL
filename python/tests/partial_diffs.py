@@ -7,7 +7,7 @@ import numpy as np
 
 np.random.seed(0)
 
-dim = 10
+dim = 2
 
 q_old = np.random.normal(size=dim)
 Q_old = sample_sympd(dim)
@@ -178,5 +178,3 @@ tmp = Q_old @ np.linalg.inv(Q) @ np.outer(q, q)
 grad_analytic = np.dot(2 * np.linalg.inv(Q) @ Q_old @ np.linalg.inv(Q)  @ q, d_q_d_eta) + \
                 np.trace(- np.linalg.inv(Q) @ (tmp + tmp.T) @ np.linalg.inv(Q) @ d_Q_d_eta)
 print(np.max(np.abs(grad_numeric[0, 0] - grad_analytic)))
-
-

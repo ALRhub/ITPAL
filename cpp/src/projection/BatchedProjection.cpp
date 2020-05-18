@@ -13,9 +13,9 @@ BatchedProjection::BatchedProjection(uword batch_size, uword dim) : batch_size(b
     openblas_set_num_threads(1);
 }
 
-std::tuple<mat, cube> BatchedProjection::more_step(const vec &epss, const vec &betas,
-                                                   const mat &old_means, const cube &old_covars,
-                                                   const mat &target_means, const cube &target_covars) {
+std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &betas,
+                                                 const mat &old_means, const cube &old_covars,
+                                                 const mat &target_means, const cube &target_covars) {
 
     mat means(size(old_means));
     cube covs(size(old_covars));
@@ -42,7 +42,7 @@ std::tuple<mat, cube> BatchedProjection::more_step(const vec &epss, const vec &b
         } else {
             vec mean;
             mat cov;
-            std::tie(mean, cov) = projectors[i].more_step(eps, beta, old_mean, old_cov, target_mean, target_cov);
+            std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
             //std::cout << mean << cov;
             means.col(i) = mean;
             covs.slice(i) = cov;
@@ -54,6 +54,29 @@ std::tuple<mat, cube> BatchedProjection::more_step(const vec &epss, const vec &b
     cout << "time " << duration.count() << endl;
     return std::make_tuple(means, covs);
 }
+
+std::tuple<mat, cube> BatchedProjection::backward(const mat &d_means, const cube &d_covs) {
+    mat d_means_target(size(d_means));
+    cube d_covs_target(size(d_covs));
+#pragma omp parallel for default(none) schedule(static) shared(d_means, d_covs, d_means_target, d_covs_target)
+    for (int i = 0; i < batch_size; ++i) {
+        vec d_mean = d_means.col(i);
+        mat d_cov = d_covs.slice(i);
+
+        if (!projection_applied.at(i)) {
+            d_means_target.col(i) = d_mean;
+            d_covs_target.slice(i) = d_cov;
+        } else {
+            vec d_mean_target;
+            mat d_cov_target;
+            std::tie(d_mean_target, d_cov_target) = projectors[i].backward(d_mean, d_cov);
+            d_means_target.col(i) = d_mean_target;
+            d_covs_target.slice(i) = d_cov_target;
+        }
+    }
+    return std::make_tuple(d_means_target, d_covs_target);
+}
+
 
 double BatchedProjection::kl(const vec& m1, const mat& cc1, const vec& m2, const mat& cc2) const {
     mat cc2_inv_t = inv(cc2);

@@ -20,6 +20,9 @@ class ITPS:
         opt = nlopt.opt(nlopt.LD_LBFGS, 2)
         opt.set_lower_bounds(0.0)
         opt.set_upper_bounds(1e12)
+        opt.set_ftol_abs(1e-12)
+        opt.set_xtol_abs(1e-12)
+        opt.set_maxeval(10000)
         opt.set_min_objective(self._dual)
         try:
             opt_eta_omega = opt.optimize([10.0, 10.0])
