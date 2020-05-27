@@ -12,12 +12,12 @@ import time as t
 
 np.random.seed(0)
 run_cpp = True  # whether to run cpp implementation
-run_py = True   # whether to run python implementation
-run_cvx = True  # whether to run cvx layers implementation (this can be very slow for large batch sizes and dims)
+run_py = False   # whether to run python implementation
+run_cvx = False  # whether to run cvx layers implementation (this can be very slow for large batch sizes and dims)
 regression_test = True #whether to run the regression tests
 
-num_gaussians = 32
-dim = 3
+num_gaussians = 3
+dim = 1000
 
 old_dists = []
 target_dists = []

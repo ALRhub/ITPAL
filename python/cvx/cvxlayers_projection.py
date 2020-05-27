@@ -13,7 +13,7 @@ class CVXProjector:
         """ runs projection layer and constructs cholesky of covariance"""
 
         solver_args = {
-            "max_iters": 50000,
+            "max_iters": 5000000,
             'eps': 1e-7,
             # "raise_on_error": False
             # "verbose": True,
@@ -44,8 +44,8 @@ class CVXProjector:
             new_mean, new_cov = self.project(eps, beta, old_mean, old_covar, target_mean, target_covar)
         dm_dm_target = tape.jacobian(new_mean, target_mean, experimental_use_pfor=False)
         dm_dcov_target = tape.jacobian(new_mean, target_covar, experimental_use_pfor=False)
-        dcov_dm_target= tape.jacobian(new_cov, target_mean, experimental_use_pfor=False)
-        dcov_dcov_target =tape.jacobian(new_cov, target_covar, experimental_use_pfor=False)
+        dcov_dm_target = tape.jacobian(new_cov, target_mean, experimental_use_pfor=False)
+        dcov_dcov_target = tape.jacobian(new_cov, target_covar, experimental_use_pfor=False)
         return dm_dm_target, dm_dcov_target, dcov_dm_target, dcov_dcov_target
 
     def backward(self, eps, beta, old_mean, old_covar, target_mean, target_covar):

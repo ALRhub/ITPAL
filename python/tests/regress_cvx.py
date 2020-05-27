@@ -52,6 +52,8 @@ def run_test(eps, beta_loss):
     print("mean max diff", np.max(np.abs(new_mean - cvx_mean)))
     print("cov max diff", np.max(np.abs(new_cov - cvx_cov)))
 
+    print(proj_cvx.backward(tf.constant(eps), tf.constant(beta), tf.constant(q_old.mean),
+                            tf.constant(q_old.covar), tf.constant(q_target.mean), tf.constant(q_target.covar)))
 
     grad_py = proj_more.get_last_full_grad()[0]
     dm_dm_target, dm_dcov_target, dcov_dm_target, dcov_dcov_target = \
