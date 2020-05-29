@@ -5,6 +5,8 @@ from util.sample import sample_sympd
 from projection.MoreProjection import MoreProjection
 from cvx.cvxlayers_projection import CVXProjector
 import tensorflow as tf
+
+from projection.pytorch_op import TorchProjMore
 """test grads for optimal eta and omega w.r.t target distribution parameters q_tilde, Q_tilde"""
 
 np.random.seed(0)
@@ -39,18 +41,27 @@ def sym_wrapper(x):
 
 def run_test(eps, beta_loss):
     beta = q_old.entropy() - beta_loss
+
+    torch_project = TorchProjMore(dim, eps, beta, q_old)
+
     new_mean, new_cov = proj_more.more_step(eps, beta, q_old.mean, q_old.covar,
                                             q_target.mean, q_target.covar)
     cvx_mean, cvx_cov = proj_cvx.project(tf.constant(eps), tf.constant(beta), tf.constant(q_old.mean),
                                          tf.constant(q_old.covar), tf.constant(q_target.mean), tf.constant(q_target.covar))
-    new_dist = Gaussian(new_mean, new_cov)
-    cvx_dist = Gaussian(np.array(cvx_mean), np.array(cvx_cov))
+    torch_mean, torch_cov = torch_project(q_target.mean, q_target.covar)
+
+    torch_dist = Gaussian(torch_mean.detach().numpy(), torch_cov.detach().numpy())
+    new_dist   = Gaussian(new_mean, new_cov)
+    cvx_dist   = Gaussian(np.array(cvx_mean), np.array(cvx_cov))
 
     print("forward")
-    print("to old", new_dist.kl(q_old), cvx_dist.kl(q_old))
-    print("to target", new_dist.kl(q_target), cvx_dist.kl(q_target))
+    print("to old", new_dist.kl(q_old), cvx_dist.kl(q_old), torch_dist.kl(q_old))
+    print("to target", new_dist.kl(q_target), cvx_dist.kl(q_target), torch_dist.kl(q_target))
     print("mean max diff", np.max(np.abs(new_mean - cvx_mean)))
     print("cov max diff", np.max(np.abs(new_cov - cvx_cov)))
+
+    print("mean max diff to torch", np.max(np.abs(new_mean - torch_mean.detach().numpy())))
+    print("cov max diff to torch", np.max(np.abs(new_cov - torch_cov.detach().numpy())))
 
     print(proj_cvx.backward(tf.constant(eps), tf.constant(beta), tf.constant(q_old.mean),
                             tf.constant(q_old.covar), tf.constant(q_target.mean), tf.constant(q_target.covar)))
