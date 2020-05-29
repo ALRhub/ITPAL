@@ -40,7 +40,7 @@ def TorchProjMore(dim, eps, beta, q_old):
 
 # Below are batch versions
 
-def TorchProjMoreBatched(dim, num_gaussians, epss, betas, old_means, old_covs):
+def TorchProjMoreBatched(proj_more_list, num_gaussians, epss, betas, old_means, old_covs):
     class TorchProjection(Function):
         @staticmethod
         def forward(ctx, mean_targets, cov_targets):
@@ -50,20 +50,17 @@ def TorchProjMoreBatched(dim, num_gaussians, epss, betas, old_means, old_covs):
             covs = cov_targets.detach().numpy()
             projeted_means = []
             projeted_covs = []
-            proj_mores = []
-
             for i in range(num_gaussians):
-                proj_more = MoreProjection(dim)
+                proj_more = proj_more_list[i]
                 mean, cov = proj_more.more_step(epss[i], betas[i],
                                                 old_means[i], old_covs[i],
                                                 means[i], covs[i])
                 projeted_means.append(mean)
                 projeted_covs.append(cov)
-                proj_mores.append(proj_more)
 
             new_means = np.stack(projeted_means)
             new_covs  = np.stack(projeted_covs)
-            ctx.projs = proj_mores
+            ctx.projs = proj_more_list
 
             return torch.Tensor(new_means).double(), torch.Tensor(new_covs).double()
 
@@ -72,9 +69,6 @@ def TorchProjMoreBatched(dim, num_gaussians, epss, betas, old_means, old_covs):
             proj_more_list = ctx.projs
             df_means=[]
             df_covs=[]
-
-            print("backward", d_means.shape)
-            print("backward", d_covs.shape)
 
             for i in range(num_gaussians):
                 df_mean, df_cov = proj_more_list[i].backward(d_means[i].detach().numpy(), d_covs[i].detach().numpy())
@@ -87,16 +81,16 @@ def TorchProjMoreBatched(dim, num_gaussians, epss, betas, old_means, old_covs):
 
 
 
-def TorchProjMoreCppBatched(dim, num_gaussians, epss, betas, old_means, old_covs):
+def TorchProjMoreCppBatched(projection_op, epss, betas, old_means, old_covs):
     class TorchProjection(Function):
         @staticmethod
         def forward(ctx, target_means, target_covs):
             means = target_means.detach().numpy()
             covs = target_covs.detach().numpy()
 
-            mp_cpp = projection.BatchedProjection(num_gaussians, dim)
-            means, covs = mp_cpp.forward(epss, betas, old_means, old_covs, means, covs)
-            ctx.proj = mp_cpp
+            #mp_cpp = projection.BatchedProjection(num_gaussians, dim)
+            means, covs = projection_op.forward(epss, betas, old_means, old_covs, means, covs)
+            ctx.proj = projection_op
 
             return torch.Tensor(means).double(), torch.Tensor(covs).double()
 
@@ -129,15 +123,14 @@ class ProjectionSimpleNet(nn.Module):
 A simple module (with 1 layer) using Cpp projection layer (batched version)
 '''
 class ProjectionSimpleNetCppBatched(nn.Module):
-    def __init__(self, dim, num_gaussians, epss, betas, old_means, old_covs):
+    def __init__(self, projection_op, epss, betas, old_means, old_covs):
         super(ProjectionSimpleNetCppBatched, self).__init__()
-        self.dim = dim
-        self.num_gaussians = num_gaussians
+        self.projection_op = projection_op
         self.old_means = old_means
         self.old_covs = old_covs
         self.epss = epss
         self.betas = betas
-        self.torch_project = TorchProjMoreCppBatched(self.dim, self.num_gaussians, self.epss, self.betas, self.old_means, self.old_covs)
+        self.torch_project = TorchProjMoreCppBatched(self.projection_op, self.epss, self.betas, self.old_means, self.old_covs)
 
     def forward(self, q_target_means, q_target_covars):
         new_means, new_covs = self.torch_project(q_target_means, q_target_covars)

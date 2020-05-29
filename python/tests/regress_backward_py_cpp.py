@@ -24,7 +24,7 @@ run_cpp_torch = True # whether to run pytorch with cpp implementation layers
 
 
 
-num_gaussians = 8
+num_gaussians = 128
 dim = 100
 
 old_dists = []
@@ -67,8 +67,6 @@ def get_loss_pytorch(means_, covs_):
 
     return torch.sum(losses_mean + losses_cov)
 
-
-
 eps = 0.1
 beta_loss = 0.05
 
@@ -87,7 +85,12 @@ if run_py_torch:
     # pytorch net
     t0 = t.time()
 
-    mp_py_torch = ProjectionSimpleNetPyBatched(dim, num_gaussians, epss, betas, old_means, old_covs)
+    proj_mores = []
+    proj_mores = [MoreProjection(dim) for i in range(num_gaussians)]
+
+    mp_py_torch = ProjectionSimpleNetPyBatched(proj_mores, num_gaussians, epss, betas, old_means, old_covs)
+
+
     t_means = torch.from_numpy(target_means).double()
     t_covs = torch.from_numpy(target_covs).double()
     t_means.requires_grad = True
@@ -116,7 +119,9 @@ if run_cpp_torch:
     # pytorch net
     t0 = t.time()
 
-    mp_cpp_torch = ProjectionSimpleNetCppBatched(dim, num_gaussians, epss, betas, old_means, old_covs)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim)
+
+    mp_cpp_torch = ProjectionSimpleNetCppBatched(mp_cpp, epss, betas, old_means, old_covs)
     t_means = torch.from_numpy(target_means).double()
     t_covs = torch.from_numpy(target_covs).double()
     t_means.requires_grad = True
