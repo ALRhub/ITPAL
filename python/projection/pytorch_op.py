@@ -1,18 +1,8 @@
 import torch
-from torch.autograd import Function, Variable
-from torch.nn import Module
+from torch.autograd import Function
 import numpy as np
-
-from numpy.fft import rfft2, irfft2
-from util.Gaussian import Gaussian
-from util.sample import sample_sympd
-
 from projection.MoreProjection import MoreProjection
-import cpp_projection as projection
-
-
 import torch.nn as nn
-
 
 # NOTE: keep the input to layers in tensor (instead of numpy array)
 
@@ -79,8 +69,6 @@ def TorchProjMoreBatched(proj_more_list, num_gaussians, epss, betas, old_means, 
             return torch.Tensor(df_means).double(), torch.Tensor(df_covs).double()
     return TorchProjection.apply
 
-
-
 def TorchProjMoreCppBatched(projection_op, epss, betas, old_means, old_covs):
     class TorchProjection(Function):
         @staticmethod
@@ -97,11 +85,10 @@ def TorchProjMoreCppBatched(projection_op, epss, betas, old_means, old_covs):
         @staticmethod
         def backward(ctx, d_means, d_covs):
             proj = ctx.proj
+            print(d_means.shape)
             df_means, df_covs = proj.backward(d_means.detach().numpy(), d_covs.detach().numpy())
             return torch.Tensor(df_means), torch.Tensor(df_covs)
     return TorchProjection.apply
-
-
 
 '''
 A simple module (with 1 layer) using python-MORE projection layer (non-batched version)

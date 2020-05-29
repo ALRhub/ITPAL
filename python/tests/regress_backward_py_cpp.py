@@ -24,7 +24,7 @@ run_cpp_torch = True # whether to run pytorch with cpp implementation layers
 
 
 
-num_gaussians = 128
+num_gaussians = 8
 dim = 100
 
 old_dists = []
@@ -48,7 +48,7 @@ def get_loss_derivative(means_,covs_):
 
     d_means = means_ - means_true
     d_covs = covs_ - covs_true
-    return d_means,d_covs
+    return d_means, d_covs
 
 # the same lost, but for pytorch
 def get_loss_pytorch(means_, covs_):
@@ -59,7 +59,6 @@ def get_loss_pytorch(means_, covs_):
     :param covs_:
     :return:
     '''
-
     # individual loss on each sample
     criteria = nn.MSELoss(reduction='none')
     losses_mean = 0.5*torch.sum(criteria(means_, torch.from_numpy(means_true).double()),1)
@@ -90,11 +89,10 @@ if run_py_torch:
 
     mp_py_torch = ProjectionSimpleNetPyBatched(proj_mores, num_gaussians, epss, betas, old_means, old_covs)
 
-
     t_means = torch.from_numpy(target_means).double()
     t_covs = torch.from_numpy(target_covs).double()
     t_means.requires_grad = True
-    t_covs.requires_grad = True
+    t_covs.requires_grad  = True
 
     means_py_torch, covs_py_torch = mp_py_torch(t_means, t_covs)
     torch_losses = get_loss_pytorch(means_py_torch, covs_py_torch)
@@ -180,6 +178,7 @@ if regression_test:
         print("max dmean diff", np.max(np.abs(py_d_means[i] - cpp_d_means[i])))
         print("max dmean diff (vs. cpp pytorch)", np.max(np.abs(py_d_means[i] - cpp_d_means_torch[i].detach().numpy())))
         print("max dmean diff (vs. py pytorch)", np.max(np.abs(py_d_means[i] - py_d_means_torch[i].detach().numpy())))
+
         print("max dcov diff", np.max(np.abs(py_d_covs[i] - cpp_d_covs[i])))
         print("max dcov diff (vs. cpp pytorch)", np.max(np.abs(py_d_covs[i] - cpp_d_covs_torch[i].detach().numpy())))
         print("max dcov diff (vs. py pytorch)", np.max(np.abs(py_d_covs[i] - py_d_covs_torch[i].detach().numpy())))
