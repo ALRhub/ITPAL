@@ -51,7 +51,7 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
     }
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "time " << duration.count() << endl;
+//    cout << "time " << duration.count() << endl;
     return std::make_tuple(means, covs);
 }
 
