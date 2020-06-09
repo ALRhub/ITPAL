@@ -20,7 +20,7 @@ class KLProjection(ch.autograd.Function):
         batch_shape, dim = mean.shape
 
         projection_op = cpp_projection.BatchedProjection(batch_shape, dim)
-        proj_mean, proj_cov = projection_op.forward(eps, beta, old_mean, old_cov, mean, cov)
+        proj_mean, proj_cov = projection_op.forward(eps * np.ones(batch_shape), beta, old_mean, old_cov, mean, cov)
         ctx.proj = projection_op
 
         return ch.from_numpy(proj_mean), ch.from_numpy(proj_cov)

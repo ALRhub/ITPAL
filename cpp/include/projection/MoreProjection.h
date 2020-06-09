@@ -13,7 +13,7 @@ using namespace arma;
 class MoreProjection{
 
 public:
-    MoreProjection(uword dim);
+    MoreProjection(uword dim, bool eec);
 
     std::tuple<vec, mat> forward(double eps, double beta,
                                  const vec  &old_mean, const mat &old_covar,
@@ -37,7 +37,7 @@ private:
     //std::tuple<vec, mat> new_params_internal(double eta, double omega);
 
     double eps, beta, omega_offset;
-    bool succ;
+    bool succ, eec;
     uword dim, eta_inc_ct;
     double eta=1, omega=1;
     std::vector<double> grad = std::vector<double>(2, 10);

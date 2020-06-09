@@ -3,9 +3,12 @@
 using namespace std::chrono;
 
 
-BatchedProjection::BatchedProjection(uword batch_size, uword dim) : batch_size(batch_size), dim(dim) {
+BatchedProjection::BatchedProjection(uword batch_size, uword dim, bool eec) :
+    batch_size(batch_size),
+    dim(dim),
+    eec(eec){
     for (int i = 0; i < batch_size; ++i) {
-        projectors.emplace_back(MoreProjection(dim));
+        projectors.emplace_back(MoreProjection(dim, eec));
         projection_applied.emplace_back(false);
     }
     entropy_const_part = 0.5 * (dim * log(2 * M_PI * M_E)); 
@@ -30,16 +33,8 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
         const vec &target_mean = target_means.col(i);
         const mat &target_cov = target_covars.slice(i);
 
-        mat occ = chol(old_cov, "lower");
-        mat tcc = chol(target_cov, "lower");
-        double kl_ = kl(target_mean, tcc, old_mean, occ);
-        double entropy_ = entropy(tcc);
 
-        if (kl_ <= eps && entropy_ >= beta){
-            means.col(i) = target_mean;
-            covs.slice(i) = target_cov;
-            projection_applied.at(i) = false;
-        } else {
+        if (eec) {
             vec mean;
             mat cov;
             std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
@@ -47,6 +42,25 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
             means.col(i) = mean;
             covs.slice(i) = cov;
             projection_applied.at(i) = true;
+        } else {
+            mat occ = chol(old_cov, "lower");
+            mat tcc = chol(target_cov, "lower");
+            double kl_ = kl(target_mean, tcc, old_mean, occ);
+            double entropy_ = entropy(tcc);
+
+            if (kl_ <= eps && entropy_ >= beta) {
+                means.col(i) = target_mean;
+                covs.slice(i) = target_cov;
+                projection_applied.at(i) = false;
+            } else {
+                vec mean;
+                mat cov;
+                std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
+                //std::cout << mean << cov;
+                means.col(i) = mean;
+                covs.slice(i) = cov;
+                projection_applied.at(i) = true;
+            }
         }
     }
     auto stop = high_resolution_clock::now();

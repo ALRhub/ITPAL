@@ -1,7 +1,8 @@
 #include <projection/MoreProjection.h>
 
-MoreProjection::MoreProjection(uword dim) :
-    dim(dim)
+MoreProjection::MoreProjection(uword dim, bool eec) :
+    dim(dim),
+    eec(eec)
 {
     dual_const_part = dim * log(2 * M_PI);
     entropy_const_part = 0.5 * (dual_const_part + dim);
@@ -37,7 +38,8 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
 
     std::vector<double> opt_eta_omega;
 
-    std::tie(succ, opt_eta_omega, res_txt) = NlOptUtil::opt_dual(opt);
+    std::tie(succ, opt_eta_omega, res_txt) = NlOptUtil::opt_dual(opt, 0.0,
+                                                                          eec ? -1e12 : 0.0);
 
     if (!succ) {
         opt_eta_omega[0] = eta;
@@ -149,7 +151,7 @@ std::tuple<vec, mat, vec, mat> MoreProjection::last_eo_grad() const {
                                vec(dim, fill::zeros), mat(dim, dim, fill::zeros));
 
     /** case 2, entropy constraint active **/
-    } else if(eta == 0.0 && omega > 0.0) {
+    } else if(eta == 0.0 && omega != 0.0) {
         mat domega_dQ = projected_covar / dim;
         return std::make_tuple(vec(dim, fill::zeros), mat(dim, dim, fill::zeros),
                                vec(dim, fill::zeros), domega_dQ);
@@ -169,7 +171,7 @@ std::tuple<vec, mat, vec, mat> MoreProjection::last_eo_grad() const {
         return std::make_tuple(c * f2_dq, c * f2_dQ, vec(dim, fill::zeros), mat(dim, dim, fill::zeros));
 
     /** case 4, both active **/
-    } else if(eta > 0.0 && omega > 0.0) {
+    } else if(eta > 0.0 && omega != 0.0) {
         vec dq_deta = ((omega + omega_offset) * old_lin - target_lin) / (eta + omega + omega_offset);
         mat dQ_deta = ((omega + omega_offset) * old_precision - target_precision) / (eta + omega + omega_offset);
         vec dq_domega = - projected_lin;

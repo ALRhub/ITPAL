@@ -11,7 +11,8 @@ PYBIND11_MODULE(cpp_projection, p){
 
     py::class_<MoreProjection> mp(p, "MoreProjection");
 
-    mp.def(py::init([](uword dim){return new MoreProjection(dim);}), py::arg("dim"));
+    mp.def(py::init([](uword dim, bool eec){return new MoreProjection(dim, eec);}),
+            py::arg("dim"), py::arg("eec") = true);
 
     mp.def("forward", [](MoreProjection* obj, double eps, double beta,
                                   dpy_arr old_mean, dpy_arr old_covar,
@@ -35,9 +36,9 @@ PYBIND11_MODULE(cpp_projection, p){
     mp.def_property_readonly("res_text", &MoreProjection::get_res_txt);
 
     py::class_<BatchedProjection> bp(p, "BatchedProjection");
-    bp.def(py::init([](uword batch_size, uword dim){
-        return new BatchedProjection(batch_size, dim);}),
-        py::arg("batchsize"), py::arg("dim"));
+    bp.def(py::init([](uword batch_size, uword dim, bool eec){
+        return new BatchedProjection(batch_size, dim, eec);}),
+        py::arg("batchsize"), py::arg("dim"), py::arg("eec") = true);
 
     bp.def("forward", [](BatchedProjection* obj, dpy_arr epss, dpy_arr betas,
                            dpy_arr old_means, dpy_arr old_covars, dpy_arr target_means, dpy_arr target_covars){

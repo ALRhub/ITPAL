@@ -27,10 +27,11 @@ public:
         return err;
     }
 
-    static std::tuple<bool, std::vector<double>, std::string> opt_dual(nlopt::opt& opt){
-        return opt_dual(opt, 0.0);}
-
-    static std::tuple<bool, std::vector<double>, std::string> opt_dual(nlopt::opt& opt, double lower_bound){
+    static std::tuple<bool, std::vector<double>, std::string> opt_dual(nlopt::opt& opt,
+            double lower_bound_eta, double lower_bound_omega){
+        std::vector<double> lower_bound(2);
+        lower_bound[0] = lower_bound_eta;
+        lower_bound[1] = lower_bound_omega;
         opt.set_lower_bounds(lower_bound);
         opt.set_upper_bounds(1e12);
 
