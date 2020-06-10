@@ -23,8 +23,10 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
     mat means(size(old_means));
     cube covs(size(old_covars));
     auto start = high_resolution_clock::now();
+    bool failed = false;
+    std::stringstream stst;
 
-#pragma omp parallel for default(none) schedule(static) shared(epss, betas, old_means, old_covars, target_means, target_covars, means, covs)
+#pragma omp parallel for default(none) schedule(static) shared(epss, betas, old_means, old_covars, target_means, target_covars, means, covs, failed, stst)
     for (int i = 0; i < batch_size; ++i) {
         double eps = epss.at(i);
         double beta = betas.at(i);
@@ -37,11 +39,16 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
         if (eec) {
             vec mean;
             mat cov;
-            std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
+            try {
+                std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
+                means.col(i) = mean;
+                covs.slice(i) = cov;
+                projection_applied.at(i) = true;
+            } catch (std::logic_error &e) {
+                stst << "Failure during projection " << i << ": " << e.what() << " ";
+                failed = true;
+            }
             //std::cout << mean << cov;
-            means.col(i) = mean;
-            covs.slice(i) = cov;
-            projection_applied.at(i) = true;
         } else {
             mat occ = chol(old_cov, "lower");
             mat tcc = chol(target_cov, "lower");
@@ -55,13 +62,22 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
             } else {
                 vec mean;
                 mat cov;
-                std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
+                try {
+                    std::tie(mean, cov) = projectors[i].forward(eps, beta, old_mean, old_cov, target_mean, target_cov);
+                    means.col(i) = mean;
+                    covs.slice(i) = cov;
+                    projection_applied.at(i) = true;
+                } catch (std::logic_error &e) {
+                    stst << "Failure during projection " << i << ": " << e.what() << " ";
+                    failed = true;
+                }
                 //std::cout << mean << cov;
-                means.col(i) = mean;
-                covs.slice(i) = cov;
-                projection_applied.at(i) = true;
+
             }
         }
+    }
+    if (failed) {
+        throw std::invalid_argument(stst.str());
     }
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);

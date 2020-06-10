@@ -38,8 +38,7 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
 
     std::vector<double> opt_eta_omega;
 
-    std::tie(succ, opt_eta_omega, res_txt) = NlOptUtil::opt_dual(opt, 0.0,
-                                                                          eec ? -1e12 : 0.0);
+    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual(opt, 0.0, eec ? -1e12 : 0.0);
 
     if (!succ) {
         opt_eta_omega[0] = eta;
@@ -57,14 +56,10 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
         projected_precision = (eta * old_precision + target_precision) / (eta + omega + omega_offset);
         projected_covar = inv_sympd((projected_precision));
         projected_mean = projected_covar * projected_lin;
-        res_txt = " ";
         res = std::make_tuple(projected_mean, projected_covar);
     } else{
-        res_txt += "Failure, last grad " + std::to_string(grad[0]) + " " + std::to_string(grad[1]) + " - skipping ";
-        res = std::make_tuple(vec(dim, fill::zeros), mat(dim, dim, fill::zeros));
-    }
-    if (eta_inc_ct > 0){
-        res_txt += "Increased eta " + std::to_string(eta_inc_ct) + " times.";
+        throw std::logic_error("NLOPT failure");
+        //res = std::make_tuple(vec(dim, fill::zeros), mat(dim, dim, fill::zeros));
     }
     return res;
 }

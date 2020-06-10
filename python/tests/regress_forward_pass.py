@@ -17,13 +17,13 @@ run_cpp = True  # whether to run cpp implementation
 run_py = True   # whether to run python implementation
 run_cvx = False  # whether to run cvx layers implementation (this can be very slow for large batch sizes and dims)
 
-run_cpp_torch = True # whether to run pytorch with cpp implementation layers
-run_py_torch = True # whether to run pytorch with python implementation layers
+run_cpp_torch = False # whether to run pytorch with cpp implementation layers
+run_py_torch = False # whether to run pytorch with python implementation layers
 
 regression_test = True #whether to run the regression tests
 
-num_gaussians = 3
-dim = 1000
+num_gaussians = 32
+dim = 32
 
 old_dists = []
 target_dists = []
@@ -96,7 +96,7 @@ if run_cpp_torch:
 
 
 if run_cpp:
-    mp_cpp = projection.BatchedProjection(num_gaussians, dim)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False)
     projeted_dists_cpp = []
 
     old_means = np.stack([od.mean for od in old_dists])

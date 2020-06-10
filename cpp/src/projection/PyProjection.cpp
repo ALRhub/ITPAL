@@ -12,7 +12,7 @@ PYBIND11_MODULE(cpp_projection, p){
     py::class_<MoreProjection> mp(p, "MoreProjection");
 
     mp.def(py::init([](uword dim, bool eec){return new MoreProjection(dim, eec);}),
-            py::arg("dim"), py::arg("eec") = true);
+            py::arg("dim"), py::arg("eec"));
 
     mp.def("forward", [](MoreProjection* obj, double eps, double beta,
                                   dpy_arr old_mean, dpy_arr old_covar,
@@ -33,21 +33,24 @@ PYBIND11_MODULE(cpp_projection, p){
     mp.def_property_readonly("last_eta", &MoreProjection::get_last_eta);
     mp.def_property_readonly("last_omega", &MoreProjection::get_last_omega);
     mp.def_property_readonly("was_succ", &MoreProjection::was_succ);
-    mp.def_property_readonly("res_text", &MoreProjection::get_res_txt);
 
     py::class_<BatchedProjection> bp(p, "BatchedProjection");
     bp.def(py::init([](uword batch_size, uword dim, bool eec){
         return new BatchedProjection(batch_size, dim, eec);}),
-        py::arg("batchsize"), py::arg("dim"), py::arg("eec") = true);
+        py::arg("batchsize"), py::arg("dim"), py::arg("eec"));
 
     bp.def("forward", [](BatchedProjection* obj, dpy_arr epss, dpy_arr betas,
                            dpy_arr old_means, dpy_arr old_covars, dpy_arr target_means, dpy_arr target_covars){
         mat means;
         cube covs;
-        std::tie(means, covs) = obj->forward(
-                to_vec<double>(epss), to_vec<double>(betas),
-                to_mat<double>(old_means), to_cube<double>(old_covars),
-                to_mat<double>(target_means), to_cube<double>(target_covars));
+        try {
+            std::tie(means, covs) = obj->forward(
+                    to_vec<double>(epss), to_vec<double>(betas),
+                    to_mat<double>(old_means), to_cube<double>(old_covars),
+                    to_mat<double>(target_means), to_cube<double>(target_covars));
+        } catch (std::invalid_argument &e) {
+            PyErr_SetString(PyExc_AssertionError, e.what());
+        }
         return std::make_tuple(from_mat(means), from_cube(covs));
         },
            py::arg("eps"), py::arg("beta"), py::arg("old_mean"),

@@ -27,7 +27,7 @@ public:
         return err;
     }
 
-    static std::tuple<bool, std::vector<double>, std::string> opt_dual(nlopt::opt& opt,
+    static std::tuple<bool, std::vector<double> > opt_dual(nlopt::opt& opt,
             double lower_bound_eta, double lower_bound_omega){
         std::vector<double> lower_bound(2);
         lower_bound[0] = lower_bound_eta;
@@ -35,7 +35,6 @@ public:
         opt.set_lower_bounds(lower_bound);
         opt.set_upper_bounds(1e12);
 
-        std::string add_txt;
         std::vector<double> eta_omega = std::vector<double>(2, 10.0);
         double dual_value;
         nlopt::result res;
@@ -43,9 +42,8 @@ public:
             res = opt.optimize(eta_omega, dual_value);
         } catch (std::exception &ex){
             res = nlopt::FAILURE;
-            add_txt = " " + static_cast<std::string>(ex.what());
         }
-        return std::make_tuple(res > 0, eta_omega, get_nlopt_err_string(res) + add_txt);
+        return std::make_tuple(res > 0, eta_omega);
     }
 
     static bool valid_despite_failure(std::vector<double>& eta_omega, std::vector<double>& grad){

@@ -24,7 +24,6 @@ public:
     double get_last_eta() const { return eta;};
     double get_last_omega() const { return omega;};
     bool was_succ() const {return succ;}
-    std::string get_res_txt() const { return res_txt;};
 
     void set_omega_offset(double omega_offset){this->omega_offset = omega_offset;};
     double get_omega_offset() const { return omega_offset;};
@@ -43,8 +42,6 @@ private:
     std::vector<double> grad = std::vector<double>(2, 10);
 
     double dual_const_part, old_term, entropy_const_part, kl_const_part;
-
-    std::string res_txt;
 
     vec old_lin, old_mean, target_lin, projected_lin, projected_mean, target_mean;
     mat old_precision, old_chol_precision_t, target_precision, projected_covar, projected_precision;
