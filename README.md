@@ -53,4 +53,4 @@ folder under cpp (you can put it somewhere else but then need to adapt the CMake
 ##### Install CppEIM package 
 go to CppEIM and run 
 
-```sudo python3 setup.py install``` or ```python3 setup.py install --user``
+```sudo python3 setup.py install``` or ``python3 setup.py install --user``
