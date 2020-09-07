@@ -148,7 +148,7 @@ if run_cpp:
     epss = eps * np.ones(num_gaussians)
     means, covs = mp_cpp.forward(epss, betas, old_means, old_covs, target_means, target_covs)
     t0 = t.time()
-    d_means, d_covs = get_loss_derivative (means, covs)
+    d_means, d_covs = get_loss_derivative(means, covs)
     cpp_d_means, cpp_d_covs = mp_cpp.backward(d_means, d_covs)
     print("cpp", t.time() - t0)
 
