@@ -12,8 +12,8 @@ find_library(lapack REQUIRED)
 add_subdirectory(pybind11)
 
 #Adapt these so that armadillo and nlopt are found
-include_directories(~/projects/eim_lib/armadillo/include ~/projects/eim_lib/nlopt/include)
-link_directories(~/projects/eim_lib/nlopt/lib)
+include_directories("/home/otf2rng/cpp/nlopt" "/home/otf2rng/cpp/nlopt/src/api" "/home/otf2rng/cpp/armadillo/include" "/home/otf2rng/cpp/OpenBLAS/include" "/home/otf2rng/cpp/lapack")
+link_directories("/home/otf2rng/cpp/nlopt" "/home/otf2rng/cpp/OpenBLAS/lib" "/home/otf2rng/cpp/lapack")
 ### END OF STUFF THE NEEDS TO BE CHANGED ##################################
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
