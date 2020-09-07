@@ -96,7 +96,7 @@ if run_cpp_torch:
 
 
 if run_cpp:
-    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=True)
     projeted_dists_cpp = []
 
     old_means = np.stack([od.mean for od in old_dists])

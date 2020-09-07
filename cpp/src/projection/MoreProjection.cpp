@@ -1,8 +1,9 @@
 #include <projection/MoreProjection.h>
 
-MoreProjection::MoreProjection(uword dim, bool eec) :
+MoreProjection::MoreProjection(uword dim, bool eec, bool constrain_entropy) :
     dim(dim),
-    eec(eec)
+    eec(eec),
+    constrain_entropy(constrain_entropy)
 {
     dual_const_part = dim * log(2 * M_PI);
     entropy_const_part = 0.5 * (dual_const_part + dim);
@@ -13,7 +14,7 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
                                              const vec  &old_mean, const mat &old_covar,
                                              const vec &target_mean, const mat &target_covar){
     this->eps = eps;
-    this->beta = beta;
+    this->beta = constrain_entropy ? beta : 0.0;
     succ = false;
 
     /** Prepare **/
@@ -39,10 +40,11 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
     std::vector<double> opt_eta_omega;
 
     std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual(opt, 0.0, eec ? -1e12 : 0.0);
+    opt_eta_omega[1] = constrain_entropy ? opt_eta_omega[1] : 0.0;
 
     if (!succ) {
         opt_eta_omega[0] = eta;
-        opt_eta_omega[1] = omega;
+        opt_eta_omega[1] = constrain_entropy ? omega : 0.0;
         succ = NlOptUtil::valid_despite_failure(opt_eta_omega, grad);
     }
 
@@ -50,7 +52,7 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
     std::tuple<vec, mat> res;
     if (succ) {
         eta = opt_eta_omega[0];
-        omega = opt_eta_omega[1];
+        omega = constrain_entropy ? opt_eta_omega[1] : 0.0;
 
         projected_lin = (eta * old_lin + target_lin) / (eta + omega + omega_offset);
         projected_precision = (eta * old_precision + target_precision) / (eta + omega + omega_offset);
@@ -102,7 +104,7 @@ std::tuple<vec, mat> MoreProjection::backward(const vec &d_mean, const mat &d_co
 
 double MoreProjection::dual(std::vector<double> const &eta_omega, std::vector<double> &grad){
     eta = eta_omega[0] > 0.0 ? eta_omega[0] : 0.0;
-    omega = eta_omega[1] > 0.0 ? eta_omega[1] : 0.0;
+    omega = eta_omega[1] > 0.0 && constrain_entropy ? eta_omega[1] : 0.0;
     double omega_off = omega + omega_offset;
 
     vec new_lin = (eta * old_lin + target_lin) / (eta + omega_off);
@@ -124,7 +126,7 @@ double MoreProjection::dual(std::vector<double> const &eta_omega, std::vector<do
         double kl = 0.5 * (sum(square(old_chol_precision_t * diff)) + kl_const_part - new_logdet + trace_term);
 
         grad[0] = eps - kl;
-        grad[1] = entropy_const_part + 0.5 * new_logdet - beta;
+        grad[1] = constrain_entropy ? entropy_const_part + 0.5 * new_logdet - beta: 0.0;
         this->grad[0] = grad[0];
         this->grad[1] = grad[1];
 

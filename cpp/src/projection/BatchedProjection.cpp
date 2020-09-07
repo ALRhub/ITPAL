@@ -3,12 +3,13 @@
 using namespace std::chrono;
 
 
-BatchedProjection::BatchedProjection(uword batch_size, uword dim, bool eec) :
+BatchedProjection::BatchedProjection(uword batch_size, uword dim, bool eec, bool constrain_entropy) :
     batch_size(batch_size),
     dim(dim),
-    eec(eec){
+    eec(eec),
+    constrain_entropy(constrain_entropy){
     for (int i = 0; i < batch_size; ++i) {
-        projectors.emplace_back(MoreProjection(dim, eec));
+        projectors.emplace_back(MoreProjection(dim, eec, constrain_entropy));
         projection_applied.emplace_back(false);
     }
     entropy_const_part = 0.5 * (dim * log(2 * M_PI * M_E)); 
@@ -54,8 +55,7 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
             mat tcc = chol(target_cov, "lower");
             double kl_ = kl(target_mean, tcc, old_mean, occ);
             double entropy_ = entropy(tcc);
-
-            if (kl_ <= eps && entropy_ >= beta) {
+            if (kl_ <= eps && (entropy_ >= beta || !constrain_entropy)) {
                 means.col(i) = target_mean;
                 covs.slice(i) = target_cov;
                 projection_applied.at(i) = false;

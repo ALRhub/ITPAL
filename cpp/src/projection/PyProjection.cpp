@@ -11,8 +11,8 @@ PYBIND11_MODULE(cpp_projection, p){
 
     py::class_<MoreProjection> mp(p, "MoreProjection");
 
-    mp.def(py::init([](uword dim, bool eec){return new MoreProjection(dim, eec);}),
-            py::arg("dim"), py::arg("eec"));
+    mp.def(py::init([](uword dim, bool eec, bool constrain_entropy){return new MoreProjection(dim, eec, constrain_entropy);}),
+            py::arg("dim"), py::arg("eec"), py::arg("constrain_entropy"));
 
     mp.def("forward", [](MoreProjection* obj, double eps, double beta,
                                   dpy_arr old_mean, dpy_arr old_covar,
@@ -35,9 +35,9 @@ PYBIND11_MODULE(cpp_projection, p){
     mp.def_property_readonly("was_succ", &MoreProjection::was_succ);
 
     py::class_<BatchedProjection> bp(p, "BatchedProjection");
-    bp.def(py::init([](uword batch_size, uword dim, bool eec){
-        return new BatchedProjection(batch_size, dim, eec);}),
-        py::arg("batchsize"), py::arg("dim"), py::arg("eec"));
+    bp.def(py::init([](uword batch_size, uword dim, bool eec, bool constrain_entropy){
+        return new BatchedProjection(batch_size, dim, eec, constrain_entropy);}),
+        py::arg("batchsize"), py::arg("dim"), py::arg("eec"), py::arg("constrain_entropy"));
 
     bp.def("forward", [](BatchedProjection* obj, dpy_arr epss, dpy_arr betas,
                            dpy_arr old_means, dpy_arr old_covars, dpy_arr target_means, dpy_arr target_covars){
