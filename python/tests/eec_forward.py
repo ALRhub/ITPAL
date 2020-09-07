@@ -37,7 +37,7 @@ for i, td in enumerate(target_dists):
     tm[i] = td.mean
     tc[i] = td.covar
 
-bp = projection.BatchedProjection(num_gaussians, dim, eec=True)
+bp = projection.BatchedProjection(num_gaussians, dim, eec=True, constrain_entropy=True)
 
 try:
     t0 = t.time()

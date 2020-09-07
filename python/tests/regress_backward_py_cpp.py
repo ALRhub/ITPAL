@@ -117,7 +117,7 @@ if run_cpp_torch:
     # pytorch net
     t0 = t.time()
 
-    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=True)
 
     mp_cpp_torch = ProjectionSimpleNetCppBatched(mp_cpp, epss, betas, old_means, old_covs)
     t_means = torch.from_numpy(target_means).double()
@@ -136,7 +136,7 @@ if run_cpp_torch:
 
 
 if run_cpp:
-    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=True)
     projeted_dists_cpp = []
 
     old_means = np.stack([od.mean for od in old_dists])
@@ -148,7 +148,7 @@ if run_cpp:
     epss = eps * np.ones(num_gaussians)
     means, covs = mp_cpp.forward(epss, betas, old_means, old_covs, target_means, target_covs)
     t0 = t.time()
-    d_means, d_covs = get_loss_derivative (means, covs)
+    d_means, d_covs = get_loss_derivative(means, covs)
     cpp_d_means, cpp_d_covs = mp_cpp.backward(d_means, d_covs)
     print("cpp", t.time() - t0)
 
