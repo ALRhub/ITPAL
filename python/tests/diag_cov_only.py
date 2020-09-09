@@ -10,8 +10,8 @@ import tensorflow as tf
 import time as t
 import torch
 
-num_gaussians = 32
-dim = 32
+num_gaussians = 1024
+dim = 100
 
 old_dists = []
 target_dists = []
@@ -27,7 +27,7 @@ for i in range(num_gaussians):
 
 uc_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=False)
 diag_cov_only_cpp = projection.BatchedDiagCovOnlyProjection(num_gaussians, dim)
-projeted_dists_cpp = []
+projected_dists_cpp = []
 
 old_means = np.stack([od.mean for od in old_dists])
 old_covs = np.stack([od.covar for od in old_dists])
@@ -35,7 +35,7 @@ old_vars = np.stack(old_vars)
 target_means = np.stack([td.mean for td in target_dists])
 target_covs = np.stack([td.covar for td in target_dists])
 target_vars = np.stack(target_vars)
-eps = 0.1
+eps = 0.001
 
 uc_betas = np.nan * np.ones(num_gaussians)
 epss = eps * np.ones(num_gaussians)
@@ -43,15 +43,18 @@ epss = eps * np.ones(num_gaussians)
 d_means = np.zeros([num_gaussians, dim]) #np.random.normal(size=[num_gaussians, dim])
 d_covs_var = np.random.normal(size=[num_gaussians, dim])
 d_covs = np.stack([np.diag(d_covs_var[i]) for i in range(num_gaussians)], axis=0)
-
+t0 = t.time()
 ref_means, ref_covs = uc_cpp.forward(epss, uc_betas, old_means, old_covs, target_means, target_covs)
+print(t.time() - t0)
 ref_bw = uc_cpp.backward(d_means, d_covs)
 
 #means = target_means
 #covs = []
 grad_mean = np.zeros([num_gaussians, dim])
 #grad_cov = []
+t0 = t.time()
 covs = diag_cov_only_cpp.forward(epss, old_vars, target_vars)
+print(t.time() - t0)
 grad_cov = diag_cov_only_cpp.backward(d_covs_var)
     #covs.append(c)
     #grad_cov.append(gc)
