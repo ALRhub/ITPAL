@@ -39,7 +39,7 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
 
     std::vector<double> opt_eta_omega;
 
-    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual(opt, 0.0, eec ? -1e12 : 0.0);
+    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual_eta_omega(opt, 0.0, eec ? -1e12 : 0.0);
     opt_eta_omega[1] = constrain_entropy ? opt_eta_omega[1] : 0.0;
 
     if (!succ) {
