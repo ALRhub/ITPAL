@@ -18,8 +18,11 @@ def interpolate_wasserstein(target_mean, target_cov, old_mean, old_cov, eta):
 
 
 def interpolate_reverse_kl(target_mean, target_cov, old_mean, old_cov, eta):
-    mean = (target_mean + eta * old_mean) / (eta + 1)
     inv_cov = (np.linalg.inv(target_cov) + eta * np.linalg.inv(old_cov)) / (eta + 1)
+    old_lin = np.linalg.solve(old_cov, old_mean)
+    target_lin = np.linalg.solve(target_cov, target_mean)
+    lin = (target_lin + eta * old_lin) / (eta + 1)
+    mean = np.linalg.solve(inv_cov, lin)
     return mean, np.linalg.inv(inv_cov)
 
 
@@ -35,9 +38,9 @@ def entropy(cov):
     return 0.5 * np.log(2 * np.pi * np.e * sp_lin.det(cov))
 
 mean_old = np.zeros(2)
-cov_old = build_to_cov(np.array([5, 0.5]), 0)
+cov_old = build_to_cov(np.array([5, 0.5]), -np.pi/3)
 mean_target = 10 * np.ones(2)
-cov_target = build_to_cov(np.array([5, 0.5]), np.pi/ 2)
+cov_target = build_to_cov(np.array([5, 0.5]), np.pi / 3)
 
 etas = [0.1, 0.33, 0.66, 1, 3.33, 6.66, 10]
 

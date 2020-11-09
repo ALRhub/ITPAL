@@ -16,7 +16,8 @@ def draw_2d_covariance(mean, covmatrix, chisquare_val=2.4477, return_raw=False, 
     if return_raw:
         return mean[0] + r_ellipse[:, 0], mean[1] + r_ellipse[:, 1]
     else:
-        return plt.plot(mean[0] + r_ellipse[:, 0], mean[1] + r_ellipse[:, 1], *args, **kwargs)
+        plt.scatter(mean[0:1], mean[1:2], marker="x", *args, **kwargs)
+        plt.plot(mean[0] + r_ellipse[:, 0], mean[1] + r_ellipse[:, 1], *args, **kwargs)
 
 
 def build_to_cov(ews, angle):
