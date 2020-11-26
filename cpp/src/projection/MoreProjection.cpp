@@ -1,9 +1,10 @@
 #include <projection/MoreProjection.h>
 
-MoreProjection::MoreProjection(uword dim, bool eec, bool constrain_entropy) :
+MoreProjection::MoreProjection(uword dim, bool eec, bool constrain_entropy, int max_eval) :
     dim(dim),
     eec(eec),
-    constrain_entropy(constrain_entropy)
+    constrain_entropy(constrain_entropy),
+    max_eval(max_eval)
 {
     dual_const_part = dim * log(2 * M_PI);
     entropy_const_part = 0.5 * (dual_const_part + dim);
@@ -39,7 +40,8 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
 
     std::vector<double> opt_eta_omega;
 
-    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual_eta_omega(opt, 0.0, eec ? -1e12 : 0.0);
+    std::tie(succ, opt_eta_omega) =
+            NlOptUtil::opt_dual_eta_omega(opt, 0.0, eec ? -1e12 : 0.0, max_eval);
     opt_eta_omega[1] = constrain_entropy ? opt_eta_omega[1] : 0.0;
 
     if (!succ) {

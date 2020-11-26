@@ -15,8 +15,9 @@ PYBIND11_MODULE(cpp_projection, p){
      --------------------------------------------------------------------------------*/
     py::class_<MoreProjection> mp(p, "MoreProjection");
 
-    mp.def(py::init([](uword dim, bool eec, bool constrain_entropy){return new MoreProjection(dim, eec, constrain_entropy);}),
-            py::arg("dim"), py::arg("eec"), py::arg("constrain_entropy"));
+    mp.def(py::init([](uword dim, bool eec, bool constrain_entropy, int max_eval){
+        return new MoreProjection(dim, eec, constrain_entropy, max_eval);}),
+            py::arg("dim"), py::arg("eec"), py::arg("constrain_entropy"), py::arg("max_eval") = 100);
 
     mp.def("forward", [](MoreProjection* obj, double eps, double beta,
                                   dpy_arr old_mean, dpy_arr old_covar,
@@ -43,8 +44,8 @@ PYBIND11_MODULE(cpp_projection, p){
     --------------------------------------------------------------------------------*/
     py::class_<DiagCovOnlyMoreProjection> dcop(p, "DiagCovOnlyMoreProjection");
 
-    dcop.def(py::init([](uword dim){return new DiagCovOnlyMoreProjection(dim);}),
-           py::arg("dim"));
+    dcop.def(py::init([](uword dim, int max_eval){return new DiagCovOnlyMoreProjection(dim, max_eval);}),
+           py::arg("dim"), py::arg("max_eval") = 100);
 
     dcop.def("forward", [](DiagCovOnlyMoreProjection* obj, double eps, dpy_arr old_covar, dpy_arr target_covar){
                return from_mat<double>(obj->forward(eps, to_vec<double>(old_covar), to_vec<double>(target_covar)));},
@@ -61,9 +62,10 @@ PYBIND11_MODULE(cpp_projection, p){
     BATCHED PROJECTION
     --------------------------------------------------------------------------------*/
     py::class_<BatchedProjection> bp(p, "BatchedProjection");
-    bp.def(py::init([](uword batch_size, uword dim, bool eec, bool constrain_entropy){
-        return new BatchedProjection(batch_size, dim, eec, constrain_entropy);}),
-        py::arg("batchsize"), py::arg("dim"), py::arg("eec"), py::arg("constrain_entropy"));
+    bp.def(py::init([](uword batch_size, uword dim, bool eec, bool constrain_entropy, int max_eval){
+        return new BatchedProjection(batch_size, dim, eec, constrain_entropy, max_eval);}),
+        py::arg("batchsize"), py::arg("dim"), py::arg("eec"), py::arg("constrain_entropy"),
+        py::arg("max_eval") = 100);
 
     bp.def("forward", [](BatchedProjection* obj, dpy_arr epss, dpy_arr betas,
                            dpy_arr old_means, dpy_arr old_covars, dpy_arr target_means, dpy_arr target_covars){
@@ -97,8 +99,9 @@ PYBIND11_MODULE(cpp_projection, p){
 
     --------------------------------------------------------------------------------*/
     py::class_<BatchedDiagCovOnlyProjection> bdcop(p, "BatchedDiagCovOnlyProjection");
-    bdcop.def(py::init([](uword batch_size, uword dim){return new BatchedDiagCovOnlyProjection(batch_size, dim);}),
-           py::arg("batchsize"), py::arg("dim"));
+    bdcop.def(py::init([](uword batch_size, uword dim, int max_eval){
+        return new BatchedDiagCovOnlyProjection(batch_size, dim, max_eval);}),
+           py::arg("batchsize"), py::arg("dim"), py::arg("max_eval") = 100);
 
     bdcop.def("forward", [](BatchedDiagCovOnlyProjection* obj, dpy_arr epss, dpy_arr old_vars,
             dpy_arr target_vars){

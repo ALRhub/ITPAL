@@ -13,7 +13,7 @@ class BatchedProjection{
 
 public:
 
-    BatchedProjection(uword batch_size, uword dim, bool eec, bool constrain_entropy);
+    BatchedProjection(uword batch_size, uword dim, bool eec, bool constrain_entropy, int max_eval);
 
     std::tuple<mat, cube> forward(const vec &epss, const vec &betas,
                                   const mat &old_means, const cube &old_covars,
