@@ -1,13 +1,12 @@
 #include <projection/BatchedDiagCovOnlyProjection.h>
-#include <chrono>
 using namespace std::chrono;
 
 
-BatchedDiagCovOnlyProjection::BatchedDiagCovOnlyProjection(uword batch_size, uword dim) :
+BatchedDiagCovOnlyProjection::BatchedDiagCovOnlyProjection(uword batch_size, uword dim, int max_eval) :
     batch_size(batch_size),
     dim(dim){
     for (int i = 0; i < batch_size; ++i) {
-        projectors.emplace_back(DiagCovOnlyMoreProjection(dim));
+        projectors.emplace_back(DiagCovOnlyMoreProjection(dim, max_eval));
         projection_applied.emplace_back(false);
     }
     openblas_set_num_threads(1);
@@ -19,8 +18,10 @@ mat BatchedDiagCovOnlyProjection::forward(const vec &epss, const mat &old_vars, 
     auto start = high_resolution_clock::now();
     bool failed = false;
     std::stringstream stst;
-
+    //int proj = 0;
+    //int non_proj = 0;
     #pragma omp parallel for default(none) schedule(static) shared(epss, old_vars, target_vars, vars, failed, stst)
+    // , proj, non_proj)
     for (int i = 0; i < batch_size; ++i) {
         double eps = epss.at(i);
         const vec &old_var = old_vars.col(i);
@@ -36,21 +37,20 @@ mat BatchedDiagCovOnlyProjection::forward(const vec &epss, const mat &old_vars, 
         } else {
             try {
                 vec var = projectors[i].forward(eps, old_var, target_var);
+                //etas.at(i) = projectors[i].get_last_eta();
                 vars.col(i) = var;
                 projection_applied.at(i) = true;
+		        //proj++;
             } catch (std::logic_error &e) {
                 stst << "Failure during projection " << i << ": " << e.what() << " ";
                 failed = true;
             }
-
+          
         }
     }
     if (failed) {
         throw std::invalid_argument(stst.str());
     }
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-//    cout << "time " << duration.count() << endl;
     return vars;
 }
 

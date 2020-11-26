@@ -13,7 +13,7 @@ class BatchedDiagCovOnlyProjection{
 
 public:
 
-    BatchedDiagCovOnlyProjection(uword batch_size, uword dim);
+    BatchedDiagCovOnlyProjection(uword batch_size, uword dim, int max_eval);
 
     mat forward(const vec &epss, const mat &old_vars, const mat &target_vars);
     mat backward(const mat &d_vars);

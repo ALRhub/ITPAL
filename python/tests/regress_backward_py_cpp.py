@@ -19,8 +19,8 @@ run_cpp = True  # whether to run cpp implementation
 run_py = True   # whether to run python implementation
 regression_test = True #whether to run the regression tests
 
-run_py_torch = True # whether to run pytorch with py implementation layers
-run_cpp_torch = True # whether to run pytorch with cpp implementation layers
+run_py_torch = False # whether to run pytorch with py implementation layers
+run_cpp_torch = False # whether to run pytorch with cpp implementation layers
 
 
 
@@ -176,12 +176,12 @@ if regression_test:
     for i in range(num_gaussians):
         print("-----------Distribution:", i, "------------")
         print("max dmean diff", np.max(np.abs(py_d_means[i] - cpp_d_means[i])))
-        print("max dmean diff (vs. cpp pytorch)", np.max(np.abs(py_d_means[i] - cpp_d_means_torch[i].detach().numpy())))
-        print("max dmean diff (vs. py pytorch)", np.max(np.abs(py_d_means[i] - py_d_means_torch[i].detach().numpy())))
+      #  print("max dmean diff (vs. cpp pytorch)", np.max(np.abs(py_d_means[i] - cpp_d_means_torch[i].detach().numpy())))
+      #  print("max dmean diff (vs. py pytorch)", np.max(np.abs(py_d_means[i] - py_d_means_torch[i].detach().numpy())))
 
         print("max dcov diff", np.max(np.abs(py_d_covs[i] - cpp_d_covs[i])))
-        print("max dcov diff (vs. cpp pytorch)", np.max(np.abs(py_d_covs[i] - cpp_d_covs_torch[i].detach().numpy())))
-        print("max dcov diff (vs. py pytorch)", np.max(np.abs(py_d_covs[i] - py_d_covs_torch[i].detach().numpy())))
+       # print("max dcov diff (vs. cpp pytorch)", np.max(np.abs(py_d_covs[i] - cpp_d_covs_torch[i].detach().numpy())))
+       # print("max dcov diff (vs. py pytorch)", np.max(np.abs(py_d_covs[i] - py_d_covs_torch[i].detach().numpy())))
 
 
 
