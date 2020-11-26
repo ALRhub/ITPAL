@@ -1,9 +1,10 @@
 #include <projection/DiagCovOnlyMoreProjection.h>
 
-DiagCovOnlyMoreProjection::DiagCovOnlyMoreProjection(uword dim) :
-    dim(dim)
+DiagCovOnlyMoreProjection::DiagCovOnlyMoreProjection(uword dim, int max_eval) :
+    dim(dim),
+    max_eval(max_eval)
 {
-    dual_const_part = dim * log(2 * M_PI);
+    //dual_const_part = dim * log(2 * M_PI);
     omega_offset = 1.0;  // Default value, might change due to rescaling!
 }
 
@@ -17,8 +18,9 @@ vec DiagCovOnlyMoreProjection::forward(double eps, const vec &old_var, const vec
 
     target_prec = 1.0 / target_var;
 
-    double old_logdet = - 2 * sum(log(old_chol_prec + 1e-25));
-    old_term = -0.5 * (old_logdet + dual_const_part);
+    old_logdet = - 2 * sum(log(old_chol_prec + 1e-25));
+
+    //old_term = -0.5 * (old_logdet + dual_const_part);
     kl_const_part = old_logdet - dim;
     /** Otpimize **/
     nlopt::opt opt(nlopt::LD_LBFGS, 1);
@@ -28,7 +30,7 @@ vec DiagCovOnlyMoreProjection::forward(double eps, const vec &old_var, const vec
 
     std::vector<double> opt_eta_omega;
 
-    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual_eta(opt, 0.0);
+    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual_eta(opt, 0.0, max_eval);
     if (!succ) {
         opt_eta_omega[0] = eta;
         succ = NlOptUtil::valid_despite_failure(opt_eta_omega, grad);
@@ -82,8 +84,8 @@ double DiagCovOnlyMoreProjection::dual(std::vector<double> const &eta_omega, std
         vec new_chol_var = sqrt(new_var);
         double new_logdet = 2 * sum(log(new_chol_var) + 1e-25);
 
-        double dual = eta * eps + eta * old_term;
-        dual += 0.5 * (eta + omega_offset) * (dual_const_part + new_logdet);
+        double dual = eta * eps - 0.5 * eta * old_logdet;
+        dual += 0.5 * (eta + omega_offset) * new_logdet;
 
         /** gradient **/
         double trace_term = accu(square(old_chol_prec % new_chol_var));

@@ -25,8 +25,8 @@ for i in range(num_gaussians):
     target_dists.append(Gaussian(means, np.diag(target_vars[-1])))
 
 
-uc_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=False)
-diag_cov_only_cpp = projection.BatchedDiagCovOnlyProjection(num_gaussians, dim)
+uc_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=False, max_eval=100)
+diag_cov_only_cpp = projection.BatchedDiagCovOnlyProjection(num_gaussians, dim, 100)
 projected_dists_cpp = []
 
 old_means = np.stack([od.mean for od in old_dists])

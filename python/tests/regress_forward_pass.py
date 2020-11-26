@@ -20,7 +20,7 @@ run_cvx = False  # whether to run cvx layers implementation (this can be very sl
 run_cpp_torch = False # whether to run pytorch with cpp implementation layers
 run_py_torch = False # whether to run pytorch with python implementation layers
 
-regression_test = True #whether to run the regression tests
+regression_test = False #whether to run the regression tests
 
 num_gaussians = 32
 dim = 32

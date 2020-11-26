@@ -13,7 +13,7 @@ using namespace arma;
 class MoreProjection{
 
 public:
-    MoreProjection(uword dim, bool eec, bool constrain_entropy);
+    MoreProjection(uword dim, bool eec, bool constrain_entropy, int max_eval);
 
     std::tuple<vec, mat> forward(double eps, double beta,
                                  const vec  &old_mean, const mat &old_covar,
@@ -41,6 +41,7 @@ private:
     double eta=1, omega=1;
     std::vector<double> grad = std::vector<double>(2, 10);
 
+    int max_eval;
     double dual_const_part, old_term, entropy_const_part, kl_const_part;
 
     vec old_lin, old_mean, target_lin, projected_lin, projected_mean, target_mean;

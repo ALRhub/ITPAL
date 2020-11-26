@@ -42,9 +42,9 @@ def TorchProjMoreBatched(proj_more_list, num_gaussians, epss, betas, old_means, 
             projeted_covs = []
             for i in range(num_gaussians):
                 proj_more = proj_more_list[i]
-                mean, cov = proj_more.more_step(epss[i], betas[i],
-                                                old_means[i], old_covs[i],
-                                                means[i], covs[i])
+                mean, cov = proj_more.project(epss[i], betas[i],
+                                              old_means[i], old_covs[i],
+                                              means[i], covs[i])
                 projeted_means.append(mean)
                 projeted_covs.append(cov)
 

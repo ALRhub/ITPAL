@@ -13,7 +13,7 @@ using namespace arma;
 class DiagCovOnlyMoreProjection{
 
 public:
-    DiagCovOnlyMoreProjection(uword dim);
+    DiagCovOnlyMoreProjection(uword dim, int max_eval);
 
     vec forward(double eps, const vec &old_var, const vec &target_var);
 
@@ -30,15 +30,14 @@ private:
     vec last_eta_grad() const;
 
     double dual(std::vector<double> const &eta, std::vector<double> &grad);
-    //std::tuple<vec, mat> new_params_internal(double eta, double omega);
 
     double eps, omega_offset;
     bool succ;
     uword dim;
     double eta=1;
     std::vector<double> grad = std::vector<double>(1, 10);
-
-    double dual_const_part, old_term, kl_const_part;
+    int max_eval;
+    double old_logdet, old_term, kl_const_part;
 
     vec old_prec, old_chol_prec, target_prec, projected_var, projected_prec;
 
