@@ -19,7 +19,7 @@ class KLProjection(ch.autograd.Function):
 
         batch_shape, dim = mean.shape
 
-        projection_op = cpp_projection.BatchedProjection(batch_shape, dim, eec=False)
+        projection_op = cpp_projection.BatchedProjection(batch_shape, dim, eec=False, constrain_entropy=True)
         proj_mean, proj_cov = projection_op.forward(eps * np.ones(batch_shape), beta, old_mean, old_cov, mean, cov)
         ctx.proj = projection_op
 
@@ -56,8 +56,8 @@ def sample_sympd(batch_size, dim):
 
 
 np.random.seed(0)
-dim = 3
-batch_size = 10
+dim = 100
+batch_size = 1024
 
 mean_old = ch.randn(batch_size, dim)
 chol_old = ch.cholesky(sample_sympd(batch_size, dim))
@@ -70,3 +70,4 @@ mean = ch.randn(batch_size, dim) + 2
 chol = ch.cholesky(sample_sympd(batch_size, dim)) + 2 * ch.eye(dim)
 
 kl_projection((mean, chol), (mean_old, chol_old), eps, beta)
+print("bla")

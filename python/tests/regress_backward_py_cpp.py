@@ -19,8 +19,8 @@ run_cpp = True  # whether to run cpp implementation
 run_py = True   # whether to run python implementation
 regression_test = True #whether to run the regression tests
 
-run_py_torch = True # whether to run pytorch with py implementation layers
-run_cpp_torch = True # whether to run pytorch with cpp implementation layers
+run_py_torch = False # whether to run pytorch with py implementation layers
+run_cpp_torch = False # whether to run pytorch with cpp implementation layers
 
 
 
@@ -117,7 +117,7 @@ if run_cpp_torch:
     # pytorch net
     t0 = t.time()
 
-    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=True)
 
     mp_cpp_torch = ProjectionSimpleNetCppBatched(mp_cpp, epss, betas, old_means, old_covs)
     t_means = torch.from_numpy(target_means).double()
@@ -136,7 +136,7 @@ if run_cpp_torch:
 
 
 if run_cpp:
-    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False)
+    mp_cpp = projection.BatchedProjection(num_gaussians, dim, eec=False, constrain_entropy=True)
     projeted_dists_cpp = []
 
     old_means = np.stack([od.mean for od in old_dists])
@@ -148,7 +148,7 @@ if run_cpp:
     epss = eps * np.ones(num_gaussians)
     means, covs = mp_cpp.forward(epss, betas, old_means, old_covs, target_means, target_covs)
     t0 = t.time()
-    d_means, d_covs = get_loss_derivative (means, covs)
+    d_means, d_covs = get_loss_derivative(means, covs)
     cpp_d_means, cpp_d_covs = mp_cpp.backward(d_means, d_covs)
     print("cpp", t.time() - t0)
 
@@ -176,12 +176,12 @@ if regression_test:
     for i in range(num_gaussians):
         print("-----------Distribution:", i, "------------")
         print("max dmean diff", np.max(np.abs(py_d_means[i] - cpp_d_means[i])))
-        print("max dmean diff (vs. cpp pytorch)", np.max(np.abs(py_d_means[i] - cpp_d_means_torch[i].detach().numpy())))
-        print("max dmean diff (vs. py pytorch)", np.max(np.abs(py_d_means[i] - py_d_means_torch[i].detach().numpy())))
+      #  print("max dmean diff (vs. cpp pytorch)", np.max(np.abs(py_d_means[i] - cpp_d_means_torch[i].detach().numpy())))
+      #  print("max dmean diff (vs. py pytorch)", np.max(np.abs(py_d_means[i] - py_d_means_torch[i].detach().numpy())))
 
         print("max dcov diff", np.max(np.abs(py_d_covs[i] - cpp_d_covs[i])))
-        print("max dcov diff (vs. cpp pytorch)", np.max(np.abs(py_d_covs[i] - cpp_d_covs_torch[i].detach().numpy())))
-        print("max dcov diff (vs. py pytorch)", np.max(np.abs(py_d_covs[i] - py_d_covs_torch[i].detach().numpy())))
+       # print("max dcov diff (vs. cpp pytorch)", np.max(np.abs(py_d_covs[i] - cpp_d_covs_torch[i].detach().numpy())))
+       # print("max dcov diff (vs. py pytorch)", np.max(np.abs(py_d_covs[i] - py_d_covs_torch[i].detach().numpy())))
 
 
 

@@ -13,7 +13,7 @@ class BatchedProjection{
 
 public:
 
-    BatchedProjection(uword batch_size, uword dim, bool eec);
+    BatchedProjection(uword batch_size, uword dim, bool eec, bool constrain_entropy);
 
     std::tuple<mat, cube> forward(const vec &epss, const vec &betas,
                                   const mat &old_means, const cube &old_covars,
@@ -30,7 +30,7 @@ private:
     std::vector<MoreProjection> projectors;
     uword batch_size, dim;
     std::vector<bool> projection_applied;
-    bool eec;
+    bool eec, constrain_entropy;
 
 
 };

@@ -32,7 +32,7 @@ q_old = Gaussian(mean_old, cov_old)
 q_target = Gaussian(mean_target, cov_target)
 samples = q_target.sample(10)
 
-proj_more = proj.MoreProjection(dim, eec=True)
+proj_more = proj.MoreProjection(dim, eec=True, constrain_entropy=True)
 
 def sym_wrapper(x):
     x = np.reshape(x, [dim, dim])
