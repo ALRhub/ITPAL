@@ -3,13 +3,13 @@
 using namespace std::chrono;
 
 
-BatchedProjection::BatchedProjection(uword batch_size, uword dim, bool eec, bool constrain_entropy) :
+BatchedProjection::BatchedProjection(uword batch_size, uword dim, bool eec, bool constrain_entropy, int max_eval) :
     batch_size(batch_size),
     dim(dim),
     eec(eec),
     constrain_entropy(constrain_entropy){
     for (int i = 0; i < batch_size; ++i) {
-        projectors.emplace_back(MoreProjection(dim, eec, constrain_entropy));
+        projectors.emplace_back(MoreProjection(dim, eec, constrain_entropy, max_eval));
         projection_applied.emplace_back(false);
     }
     entropy_const_part = 0.5 * (dim * log(2 * M_PI * M_E)); 
