@@ -1,14 +1,14 @@
-from util.Gaussian import Gaussian
 import numpy as np
-from util.sample import sample_sympd
-from projection.SplitMoreProjection import SplitMoreProjection
+
+from python.projection.SplitMoreProjection import SplitMoreProjection
+from python.util.Gaussian import Gaussian
+from python.util.sample import sample_sympd
 
 np.random.seed(0)
 dim = 5
 
 mean_old = np.random.uniform(low=-1, high=1, size=dim)
 cov_old = sample_sympd(dim)
-
 
 mean_target = np.random.uniform(low=-1, high=1, size=dim)
 cov_target = sample_sympd(dim)
@@ -28,6 +28,3 @@ print("dist mean:", 0.5 * np.dot(mean_old - mean_proj, np.linalg.solve(cov_old, 
 cov_dist = 0.5 * (np.trace(np.linalg.solve(cov_old, cov_proj)) - dim + np.linalg.slogdet(cov_old)[1] -
                   np.linalg.slogdet(cov_proj)[1])
 print("dist cov:", cov_dist)
-
-
-

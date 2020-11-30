@@ -1,8 +1,10 @@
 import numpy as np
-from projection.ITPS import ITPS
 import nlopt
 
-class SplitMoreProjection():
+from python.projection.ITPS import ITPS
+
+
+class SplitMoreProjection(object):
 
     def __init__(self, dim):
 
@@ -39,6 +41,8 @@ class SplitMoreProjection():
     def more_step(self, eps_mu, eps_sigma, old_mean, old_covar, target_mean, target_covar):
         self._eps_mu = eps_mu
         self._eps_sigma = eps_sigma
+        self._target_mean = target_mean
+        self._target_covar = target_covar
         self._succ = True
 
         self._old_mean = old_mean
@@ -54,16 +58,18 @@ class SplitMoreProjection():
         self._old_term = - 0.5 * (self._dual_const_part + old_logdet)
         self._kl_const_part = old_logdet - self._dim
 
-        print("mean")
+        # print("mean")
         try:
             opt_eta_mu = self.opt_dual(self._dual_mean)
+            self._eta_mu = opt_eta_mu
             self._proj_mean = self._new_mean(opt_eta_mu)
         except Exception:
             self._succ = False
             self._proj_mean = None
-        print("cov")
+        # print("cov")
         try:
             opt_eta_sig = self.opt_dual(self._dual_cov)
+            self._eta_sig = opt_eta_sig
             self._proj_covar = self._new_cov(opt_eta_sig)
         except Exception:
             self._succ = False
@@ -93,9 +99,9 @@ class SplitMoreProjection():
 
             grad[0] = self._eps_mu - 0.5 * np.sum(np.square(self._old_chol_precision_t @ (self._old_mean - proj_mean)))
             self._grad = grad
-            #print("eta", eta_mu)
-            #print("dual", dual)
-            #print("grad", grad)
+            # print("eta", eta_mu)
+            # print("dual", dual)
+            # print("grad", grad)
             return dual
         except np.linalg.LinAlgError as e:
             grad[0] = -1.0
@@ -116,9 +122,9 @@ class SplitMoreProjection():
             grad[0] = self._eps_sigma - 0.5 * (self._kl_const_part - new_logdet + trace_term)
             self._grad = grad
 
-            #print("eta", eta_sig)
-            #print("dual", dual)
-            #print("grad", grad)
+            # print("eta", eta_sig)
+            # print("dual", dual)
+            # print("grad", grad)
             return dual
 
         except np.linalg.LinAlgError as e:
@@ -126,9 +132,104 @@ class SplitMoreProjection():
             grad[0] = -1.0
             return 1e12
 
+    def backward(self, d_mean: np.ndarray, d_cov: np.ndarray):
+        """
+        Error signal backward propagation based on values from last forward pass. This corresponds to the actual
+        backward pass we would need in tensorflow
+        TODO: Implement backward propagation of err_cov
+        """
+        assert self._succ, "INVALID STATE, No previous successful execution!"
+        deta_mu_dq_target, deta_sig_dQ_target = self.get_last_eo_grad()
 
+        Q_mu = (self._eta_mu * self._old_precision + self._target_precision) / (self._eta_mu + 1)
+        covar_mu = np.linalg.solve(Q_mu, np.eye(self._dim))
 
+        dq_deta_mu = (self._eta_mu * self._old_lin - self._target_lin) / (self._eta_mu + 1) ** 2
+        dQ_deta_sig = (self._eta_sig * self._old_precision - self._target_precision) / (self._eta_sig + 1) ** 2
 
+        # mean
+        dq = covar_mu @ d_mean
+        dQ = - self._proj_covar @ d_cov @ self._proj_covar
+        tmp = np.outer(d_mean, Q_mu @ self._proj_mean)
+        dQ_mu = - covar_mu @ (0.5 * tmp + 0.5 * tmp.T) @ covar_mu
+        dQ_mu2 = - covar_mu @ (d_mean * self._target_lin) @ covar_mu
 
+        deta_mu = np.dot(dq, dq_deta_mu) + np.trace(dQ_mu @ dq_deta_mu)
+        deta_sig = np.trace(dQ @ dQ_deta_sig)
 
+        dq_target = deta_mu * deta_mu_dq_target + dq / (self._eta_mu + 1)
+        dQ_target = deta_sig * deta_sig_dQ_target + dQ / (self._eta_sig + 1) + dQ_mu / (self._eta_mu + 1)
 
+        d_mu_target = self._target_precision @ dq_target
+        tmp = np.outer(dq_target, self._target_mean)
+        d_cov_target = - self._target_precision @ (0.5 * tmp + 0.5 * tmp.T + dQ_target) @ self._target_precision
+
+        return d_mu_target, d_cov_target
+
+    def get_last_eo_grad(self):
+        """
+        gradients of eta_mu and eta_sigma w.r.t. inputs, based on last forward pass
+        For each case (except the first) there is a "baseline" implementation, which should correspond to the
+        equations in the overleaf, and a tuned version, optimized to reduce number of performed operations
+        """
+        assert self._succ, "INVALID STATE, No previous successful execution!"
+        if self._eta_mu == 0 and self._eta_sig == 0:  # case 1
+
+            return np.zeros(self._dim), np.zeros([self._dim, self._dim])
+
+        at, bt = np.zeros(self._dim), np.zeros([self._dim, self._dim])
+
+        if self._eta_mu > 0:
+            at = self.mu_grad_baseline()
+            # at, bt, ct, dt = self._case2_tuned()
+            # ab, bb, cb, db = self._case2_baseline()
+            # print(np.max(np.abs(cb - ct)), np.max(np.abs(cb - ct)))
+
+        if self._eta_sig > 0:  # case 3
+            bt = self.sig_grad_baseline()
+            # at, bt, ct, dt = self._case3_baseline2()
+            # ab, bb, cb, db = self._case3_baseline()
+            # print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)))
+
+        return at, bt
+
+    def mu_grad_baseline(self):
+        # Q_mu stuff 
+        Q_mu = (self._eta_mu * self._old_precision + self._target_precision) / (self._eta_mu + 1)
+        covar_mu = np.linalg.solve(Q_mu, np.eye(self._dim))
+        dQ_mu_deta_mu = (self._eta_mu * self._old_precision - self._target_precision) / (self._eta_mu + 1) ** 2
+        dsig_mu_deta_mu = - covar_mu @ dQ_mu_deta_mu @ covar_mu
+
+        dq_deta_mu = (self._eta_mu * self._old_lin - self._target_lin) / (self._eta_mu + 1) ** 2
+        dmean_dq = - covar_mu @ self._old_lin + covar_mu @ self._old_precision @ covar_mu @ self._target_lin
+
+        tmp1 = self._target_lin.T @ covar_mu @ dQ_mu_deta_mu @ covar_mu @ self._old_lin
+        tmp2 = 0.5 * self._target_lin @ dsig_mu_deta_mu @ self._old_precision @ covar_mu @ self._target_lin
+        tmp3 = 0.5 * self._target_lin @ covar_mu @ self._old_precision @ dsig_mu_deta_mu @ self._target_lin
+        dmean_deta_mu = dq_deta_mu @ dmean_dq + tmp1 - tmp2 - tmp3
+
+        deta_mu_dq_target = dmean_dq / dmean_deta_mu
+
+        return deta_mu_dq_target
+
+    def sig_grad_baseline(self):
+        dQ_deta_sig = (self._eta_sig * self._old_precision - self._target_precision) / (self._eta_sig + 1) ** 2
+        dcov_deta_sig = 0.5 * np.trace(
+            -self._old_precision @ self._proj_covar @ dQ_deta_sig @ self._proj_covar + self._proj_covar @ dQ_deta_sig)
+        dcov_dQ = 0.5 * (-self._proj_covar @ self._old_precision @ self._proj_covar + self._old_precision)
+
+        deta_sig_dQ_target = dcov_dQ / dcov_deta_sig
+
+        return deta_sig_dQ_target
+
+    @property
+    def last_eta_mu(self):
+        return self._eta_mu
+
+    @property
+    def last_eta_sig(self):
+        return self._eta_sig
+
+    @property
+    def success(self):
+        return self._succ
