@@ -30,7 +30,8 @@ add_library(projectionlib SHARED
         src/projection/BatchedProjection.cpp
         src/projection/DiagCovOnlyMoreProjection.cpp
         src/projection/BatchedDiagCovOnlyProjection.cpp
-        src/projection/SplitDiagMoreProjection.cpp)
+        src/projection/SplitDiagMoreProjection.cpp
+        src/projection/BatchedSplitDiagMoreProjection.cpp)
 target_link_libraries(projectionlib lapack gfortran nlopt)
 
 pybind11_add_module(cpp_projection src/projection/PyProjection.cpp)

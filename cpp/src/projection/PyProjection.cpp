@@ -8,6 +8,7 @@
 #include <projection/BatchedDiagCovOnlyProjection.h>
 
 #include <projection/SplitDiagMoreProjection.h>
+#include <projection/BatchedSplitDiagMoreProjection.h>
 
 namespace py = pybind11;
 
@@ -62,7 +63,7 @@ PYBIND11_MODULE(cpp_projection, p){
 
 
     /* ------------------------------------------------------------------------------
-    SPLIT DIAG COVAR ONLY PROJECTION
+    SPLIT DIAG COVAR PROJECTION
     --------------------------------------------------------------------------------*/
     py::class_<SplitDiagMoreProjection> sdcmp(p, "SplitDiagMoreProjection");
 
@@ -138,4 +139,40 @@ PYBIND11_MODULE(cpp_projection, p){
     bdcop.def("backward", [](BatchedDiagCovOnlyProjection* obj, dpy_arr d_vars){
                mat d_vars_d_target = obj->backward(to_mat<double>(d_vars));
                return from_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
+
+    /* ------------------------------------------------------------------------------
+    BATCHED SPLIT DIAG COVAR PROJECTION
+    --------------------------------------------------------------------------------*/
+    py::class_<BatchedSplitDiagMoreProjection> bsdcmp(p, "BatchedSplitDiagMoreProjection");
+    bsdcmp.def(py::init([](uword batch_size, uword dim, int max_eval){
+               return new BatchedSplitDiagMoreProjection(batch_size, dim, max_eval);}),
+           py::arg("batchsize"), py::arg("dim"), py::arg("max_eval") = 100);
+
+    bsdcmp.def("forward", [](BatchedSplitDiagMoreProjection* obj, dpy_arr epss, dpy_arr betas,
+                         dpy_arr old_means, dpy_arr old_vars, dpy_arr target_means, dpy_arr target_vars){
+               mat means;
+               mat vars;
+               try {
+                   std::tie(means, vars) = obj->forward(
+                           to_vec<double>(epss), to_vec<double>(betas),
+                           to_mat<double>(old_means), to_mat<double>(old_vars),
+                           to_mat<double>(target_means), to_mat<double>(target_vars));
+               } catch (std::invalid_argument &e) {
+                   PyErr_SetString(PyExc_AssertionError, e.what());
+               }
+               return std::make_tuple(from_mat(means), from_mat(vars));
+           },
+           py::arg("epss"), py::arg("beta"), py::arg("old_mean"),
+           py::arg("old_vars"), py::arg("target_mean"), py::arg("target_vars")
+    );
+
+    /*
+    bp.def("backward", [](BatchedProjection* obj, dpy_arr d_means, dpy_arr d_covs){
+               mat d_means_target;
+               cube d_covs_target;
+               std::tie(d_means_target, d_covs_target) = obj->backward(to_mat<double>(d_means), to_cube<double>(d_covs));
+               return std::make_tuple(from_mat(d_means_target), from_cube(d_covs_target));
+           },
+           py::arg("d_means"), py::arg("d_covs"));
+           */
 }

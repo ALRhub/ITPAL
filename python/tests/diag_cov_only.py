@@ -5,8 +5,8 @@ import time as t
 
 from python.util.Gaussian import Gaussian
 
-num_gaussians = 1024
-dim = 100
+num_gaussians = 32
+dim = 5
 
 old_dists = []
 target_dists = []
