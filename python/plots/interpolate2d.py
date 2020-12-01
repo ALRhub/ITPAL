@@ -128,7 +128,7 @@ for i, eta in enumerate(ent_etas):
     ent_fwd_kl.append(entropy(cov_fwd_kl))
 
 
-plt.plot(ent_etas, ent_frob)
+#plt.plot(ent_etas, ent_frob)
 plt.plot(ent_etas, ent_wd)
 plt.plot(ent_etas, ent_rev_kl)
 plt.plot(ent_etas, ent_fwd_kl)
@@ -136,7 +136,7 @@ plt.grid("on")
 plt.semilogx()
 plt.xlabel("eta")
 plt.ylabel("entropy")
-plt.legend(["frobenoius", "wasserstein", "revers kl", "foward kl"])
+plt.legend(["Wasserstein Distance", "Reverse KL", "Forward KL"])
 #tikzplotlib.save("inter_entropies.tex")
 plt.savefig("entropy.pdf", bbox_inches='tight', pad_inches=0)
 plt.figure()

@@ -33,7 +33,7 @@ vec DiagCovOnlyMoreProjection::forward(double eps, const vec &old_var, const vec
     std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual_eta(opt, 0.0, max_eval);
     if (!succ) {
         opt_eta_omega[0] = eta;
-        succ = NlOptUtil::valid_despite_failure(opt_eta_omega, grad);
+        succ = NlOptUtil::valid_despite_failure_eta(opt_eta_omega, grad);
     }
 
     /** Post process**/

@@ -3,9 +3,11 @@
 
 #include <projection/MoreProjection.h>
 #include <projection/BatchedProjection.h>
+
 #include <projection/DiagCovOnlyMoreProjection.h>
 #include <projection/BatchedDiagCovOnlyProjection.h>
 
+#include <projection/SplitDiagMoreProjection.h>
 
 namespace py = pybind11;
 
@@ -57,6 +59,24 @@ PYBIND11_MODULE(cpp_projection, p){
 
     dcop.def_property_readonly("last_eta", &DiagCovOnlyMoreProjection::get_last_eta);
     dcop.def_property_readonly("was_succ", &DiagCovOnlyMoreProjection::was_succ);
+
+
+    /* ------------------------------------------------------------------------------
+    SPLIT DIAG COVAR ONLY PROJECTION
+    --------------------------------------------------------------------------------*/
+    py::class_<SplitDiagMoreProjection> sdcmp(p, "SplitDiagMoreProjection");
+
+    sdcmp.def(py::init([](uword dim, int max_eval){return new SplitDiagMoreProjection(dim, max_eval);}),
+           py::arg("dim"), py::arg("max_eval") = 100);
+
+    sdcmp.def("forward", [](SplitDiagMoreProjection* obj, double eps_mu, double eps_sig,
+                                   dpy_arr old_mean, dpy_arr old_var,
+                                   dpy_arr target_mean, dpy_arr target_var){
+               return from_mat<double>(obj->forward(eps_mu, eps_sig,
+                                                    to_vec<double>(old_mean), to_vec<double>(old_var),
+                                                    to_vec<double>(target_mean), to_vec<double>(target_var)));},
+           py::arg("eps_mu"), py::arg("eps_sig"), py::arg("old_mean"),
+           py::arg("old_var"), py::arg("target_mean"), py::arg("target_var"));
 
     /* ------------------------------------------------------------------------------
     BATCHED PROJECTION

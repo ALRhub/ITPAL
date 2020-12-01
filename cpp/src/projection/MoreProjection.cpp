@@ -47,7 +47,7 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
     if (!succ) {
         opt_eta_omega[0] = eta;
         opt_eta_omega[1] = constrain_entropy ? omega : 0.0;
-        succ = NlOptUtil::valid_despite_failure(opt_eta_omega, grad);
+        succ = NlOptUtil::valid_despite_failure_eta_omega(opt_eta_omega, grad);
     }
 
     /** Post process**/
