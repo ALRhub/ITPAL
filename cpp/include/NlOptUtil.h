@@ -71,7 +71,7 @@ public:
         return std::make_tuple(res > 0, eta);
     }
 
-    static bool valid_despite_failure(std::vector<double>& eta_omega, std::vector<double>& grad){
+    static bool valid_despite_failure_eta_omega(std::vector<double>& eta_omega, std::vector<double>& grad){
         /*NLOPT sometimes throws errors because the dual and gradients do not fit together anymore for numerical reasons
          * This problem becomes severe for high dimensional data.
          * However, that happens mostly after the algorithm is almost converged. We check for those instances and just
@@ -95,6 +95,26 @@ public:
         return false;
     }
 
+
+    static bool valid_despite_failure_eta(std::vector<double>& lp, std::vector<double>& grad){
+        /*NLOPT sometimes throws errors because the dual and gradients do not fit together anymore for numerical reasons
+         * This problem becomes severe for high dimensional data.
+         * However, that happens mostly after the algorithm is almost converged. We check for those instances and just
+         * work with the last values.
+         *
+         */
+        //gradient norm close to 0
+        double grad_bound = 1e-5;
+        double value_bound = 1e-10;
+        if (sqrt(grad[0] * grad[0]) < grad_bound){
+            return true;
+        }
+        //omega at lower bound and gradient for eta close to 0
+        if (lp[0] < value_bound){
+            return true;
+        }
+        return false;
+    }
 };
 
 

@@ -1,6 +1,4 @@
 #include <projection/BatchedDiagCovOnlyProjection.h>
-using namespace std::chrono;
-
 
 BatchedDiagCovOnlyProjection::BatchedDiagCovOnlyProjection(uword batch_size, uword dim, int max_eval) :
     batch_size(batch_size),
@@ -15,13 +13,10 @@ BatchedDiagCovOnlyProjection::BatchedDiagCovOnlyProjection(uword batch_size, uwo
 mat BatchedDiagCovOnlyProjection::forward(const vec &epss, const mat &old_vars, const mat &target_vars) {
 
     mat vars(size(old_vars));
-    auto start = high_resolution_clock::now();
     bool failed = false;
     std::stringstream stst;
-    //int proj = 0;
-    //int non_proj = 0;
+
     #pragma omp parallel for default(none) schedule(static) shared(epss, old_vars, target_vars, vars, failed, stst)
-    // , proj, non_proj)
     for (int i = 0; i < batch_size; ++i) {
         double eps = epss.at(i);
         const vec &old_var = old_vars.col(i);

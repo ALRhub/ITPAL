@@ -12,8 +12,6 @@ class SplitMoreProjection(object):
         self._grad = None
         self._succ = False
         self._dim = dim
-        self._dual_const_part = dim * np.log(2 * np.pi)
-        self._entropy_const_part = 0.5 * (self._dual_const_part + dim)
 
     def opt_dual(self, fn):
         opt = nlopt.opt(nlopt.LD_LBFGS, 1)
@@ -54,9 +52,9 @@ class SplitMoreProjection(object):
         self._target_precision = np.linalg.inv(target_covar)
         self._target_lin = self._target_precision @ target_mean
 
-        old_logdet = - 2 * np.sum(np.log(np.diagonal(self._old_chol_precision_t) + 1e-25))
-        self._old_term = - 0.5 * (self._dual_const_part + old_logdet)
-        self._kl_const_part = old_logdet - self._dim
+        self._old_logdet = - 2 * np.sum(np.log(np.diagonal(self._old_chol_precision_t) + 1e-25))
+        #self._old_term = - 0.5 * (self._dual_const_part + old_logdet)
+        self._kl_const_part = self._old_logdet - self._dim
 
         # print("mean")
         try:
@@ -104,9 +102,9 @@ class SplitMoreProjection(object):
 
             grad[0] = self._eps_mu - 0.5 * np.sum(np.square(self._old_chol_precision_t @ (self._old_mean - proj_mean)))
             self._grad = grad
-            # print("eta", eta_mu)
-            # print("dual", dual)
-            # print("grad", grad)
+           # print("eta", eta_mu)
+           # print("dual", dual)
+           # print("grad", grad)
             return dual
         except np.linalg.LinAlgError as e:
             grad[0] = -1.0
@@ -120,8 +118,8 @@ class SplitMoreProjection(object):
             proj_cov_chol = np.linalg.cholesky(proj_cov)
             new_logdet = 2 * np.sum(np.log(np.diagonal(proj_cov_chol) + 1e-25))
 
-            dual = eta_sig * self._eps_sigma + eta_sig * self._old_term
-            dual += 0.5 * (eta_sig + 1) * (self._dual_const_part + new_logdet)
+            dual = eta_sig * self._eps_sigma - 0.5 * eta_sig * self._old_logdet
+            dual += 0.5 * (eta_sig + 1) * new_logdet
 
             trace_term = np.sum(np.square(self._old_chol_precision_t @ proj_cov_chol))
             grad[0] = self._eps_sigma - 0.5 * (self._kl_const_part - new_logdet + trace_term)
