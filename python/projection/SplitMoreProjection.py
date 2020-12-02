@@ -53,7 +53,7 @@ class SplitMoreProjection(object):
         self._target_lin = self._target_precision @ target_mean
 
         self._old_logdet = - 2 * np.sum(np.log(np.diagonal(self._old_chol_precision_t) + 1e-25))
-        #self._old_term = - 0.5 * (self._dual_const_part + old_logdet)
+        # self._old_term = - 0.5 * (self._dual_const_part + old_logdet)
         self._kl_const_part = self._old_logdet - self._dim
 
         # print("mean")
@@ -61,8 +61,9 @@ class SplitMoreProjection(object):
             opt_eta_mu = self.opt_dual(self._dual_mean)
             self._eta_mu = opt_eta_mu
             self._proj_mean = self._new_mean(opt_eta_mu)
-            self._Q_mu = (self._eta_mu * self._old_precision + self._target_precision) / (self._eta_mu + 1)
-            self._lin = self._Q_mu @ self._proj_mean
+            self._precision_mu = (self._eta_mu * self._old_precision + self._target_precision) / (self._eta_mu + 1)
+            self._covar_mu = np.linalg.solve(self._precision_mu, np.eye(self._dim))
+            self._proj_lin = self._precision_mu @ self._proj_mean
         except Exception:
             self._succ = False
             self._proj_mean = None
@@ -102,9 +103,9 @@ class SplitMoreProjection(object):
 
             grad[0] = self._eps_mu - 0.5 * np.sum(np.square(self._old_chol_precision_t @ (self._old_mean - proj_mean)))
             self._grad = grad
-           # print("eta", eta_mu)
-           # print("dual", dual)
-           # print("grad", grad)
+            # print("eta", eta_mu)
+            # print("dual", dual)
+            # print("grad", grad)
             return dual
         except np.linalg.LinAlgError as e:
             grad[0] = -1.0
@@ -176,80 +177,83 @@ class SplitMoreProjection(object):
         equations in the overleaf, and a tuned version, optimized to reduce number of performed operations
         """
         assert self._succ, "INVALID STATE, No previous successful execution!"
-        if self._eta_mu == 0 and self._eta_sig == 0:  # case 1
 
-            return np.zeros(self._dim), np.zeros([self._dim, self._dim])
-
-        at, bt = np.zeros(self._dim), np.zeros([self._dim, self._dim])
+        at, bt, ct, dt = np.zeros(self._dim), np.zeros([self._dim, self._dim]), np.zeros(self._dim), np.zeros(
+            [self._dim, self._dim])
 
         if self._eta_mu > 0:
-            at = self.mu_grad_baseline()
-            # at, bt, ct, dt = self._case2_tuned()
-            # print(np.max(np.abs(cb - ct)), np.max(np.abs(cb - ct)))
+            # at, bt = self.mu_grad_baseline()
+            at, bt = self.mu_grad_tuned()
 
         if self._eta_sig > 0:  # case 3
-            bt = self.sig_grad_baseline()
+            # ct, dt = self.sig_grad_baseline()
+            ct, dt = self.sig_grad_tuned()
             # print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)))
 
-        return at, bt
+        return at, bt, ct, dt
 
     def mu_grad_baseline(self):
 
-        covar_mu = np.linalg.solve(self._Q_mu, np.eye(self._dim))
         dQ_mu_deta_mu = (self._old_precision - self._target_precision) / (self._eta_mu + 1) ** 2
-        dsig_mu_deta_mu = - covar_mu @ dQ_mu_deta_mu @ covar_mu
+        # dsig_mu_deta_mu = - self._covar_mu @ dQ_mu_deta_mu @ self._covar_mu
         dq_deta_mu = (self._old_lin - self._target_lin) / (self._eta_mu + 1) ** 2
 
-        dmean_dq = - covar_mu @ self._old_lin + covar_mu @ self._old_precision @ covar_mu @ self._lin
+        dmean_dq = - self._covar_mu @ self._old_lin + self._covar_mu @ self._old_precision @ self._covar_mu @ self._proj_lin
 
-        tmp1 = self._lin @ covar_mu @ dQ_mu_deta_mu @ covar_mu @ self._old_lin
-        tmp2 = self._lin @ dsig_mu_deta_mu @ self._old_precision @ covar_mu @ self._lin
+        # tmp1 = self._proj_lin @ self._covar_mu @ dQ_mu_deta_mu @ self._covar_mu @ self._old_lin
+        # tmp2 = self._proj_lin @ dsig_mu_deta_mu @ self._old_precision @ self._covar_mu @ self._proj_lin
 
-        # TODO: not sure this is faster, no difference in error, though
-        # lin_old = np.outer(self._lin, self._old_lin)
-        # tmp1 = covar_mu @ (0.5 * (lin_old + lin_old.T)) @ covar_mu
-        # lin_lin = self._old_precision @ covar_mu @ np.outer(self._lin, self._lin)
-        # tmp2 = - 0.5 * covar_mu @ (lin_lin + lin_lin.T) @ covar_mu
-        # dcov_dQ_mu = tmp1 + tmp2
+        # TODO: Philipp's solution from combined cases. Not sure this is faster, no difference in error, though.
+        lin_old = np.outer(self._proj_lin, self._old_lin)
+        tmp1 = self._covar_mu @ (0.5 * (lin_old + lin_old.T)) @ self._covar_mu
+        lin_lin = self._old_precision @ self._covar_mu @ np.outer(self._proj_lin, self._proj_lin)
+        tmp2 = - 0.5 * self._covar_mu @ (lin_lin + lin_lin.T) @ self._covar_mu
+        dmean_dQ_mu = tmp1 + tmp2
 
-        dmean_deta_mu = np.dot(dmean_dq, dq_deta_mu) + tmp1 + tmp2
-        # dmean_deta_mu = np.dot(dmean_dq, dq_deta_mu) + np.trace(dcov_dQ_mu @ dQ_mu_deta_mu)
+        # dmean_deta_mu = np.dot(dmean_dq, dq_deta_mu) + tmp1 + tmp2
+        dmean_deta_mu = np.dot(dmean_dq, dq_deta_mu) + np.trace(dmean_dQ_mu @ dQ_mu_deta_mu)
 
         lhs = dmean_dq / (self._eta_mu + 1)
         deta_mu_dq_target = lhs / -dmean_deta_mu
 
+        lhs = dmean_dQ_mu / (self._eta_mu + 1)
+        deta_mu_dQ_target = lhs / -dmean_deta_mu
+
         # return deta_mu_dq_target / (self._eta_mu + 1)
-        return deta_mu_dq_target
+        return deta_mu_dq_target, deta_mu_dQ_target
 
     def mu_grad_tuned(self):
-        # Q_mu stuff
-        covar_mu = np.linalg.solve(self._Q_mu, np.eye(self._dim))
-        dQ_mu_deta_mu = (self._old_precision - self._target_precision) / (self._eta_mu + 1) ** 2
-        dsig_mu_deta_mu = - covar_mu @ dQ_mu_deta_mu @ covar_mu
+        dQ_mu_deta_mu = (self._old_precision - self._precision_mu) / (self._eta_mu + 1)
+        dq_deta_mu = (self._old_lin - self._proj_lin) / (self._eta_mu + 1)
 
-        dq_deta_mu = (self._old_lin - self._target_lin) / (self._eta_mu + 1) ** 2
-        dmean_dq = - covar_mu @ self._old_lin + covar_mu @ self._old_precision @ covar_mu @ self._lin
+        dmean_dq = 2 * self._covar_mu @ (self._old_precision @ self._proj_mean - self._old_lin)
 
-        tmp1 = self._lin @ covar_mu @ dQ_mu_deta_mu @ covar_mu @ self._old_lin
-        tmp2 = self._lin @ dsig_mu_deta_mu @ self._old_precision @ covar_mu @ self._lin
-        # tmp2 = 0.5 * self._lin @ dsig_mu_deta_mu @ self._old_precision @ covar_mu @ self._lin
-        # tmp3 = 0.5 * self._lin @ covar_mu @ self._old_precision @ dsig_mu_deta_mu @ self._lin
+        # TODO @Philipp: This might also be possible with the combined case. Maybe change it, if not done already?
+        # TODO: This is effectively dtm1_dQ @ dQ_deta + dtm2_dQ @ dQ_deta, just for Q_mu here
+        # TODO: Only makes sense if we do not have to reuse the dmean_dQ_mu for deta_mu_dQ_target
+        # dcovar_mu_deta_mu = - self._covar_mu @ dQ_mu_deta_mu @ self._covar_mu
+        # dmean_dQ_mu_deta_mu = self._proj_lin @ dcovar_mu_deta_mu @ (
+        #         self._old_precision @ self._covar_mu @ self._proj_lin - self._old_lin)
 
-        # old_cov = np.linalg.inv(self._old_precision)
-        # tmp2 = - self._lin @ self._Q_mu @ old_cov @ self._Q_mu @ old_cov @ self._Q_mu @ dQ_mu_deta_mu @ self._Q_mu @ old_cov @ self._Q_mu @ self._lin
-        dmean_deta_mu = dq_deta_mu @ dmean_dq + tmp1 + tmp2
+        lin_old = np.outer(self._proj_lin, self._old_lin)
+        lin_lin = self._old_precision @ self._covar_mu @ np.outer(self._proj_lin, self._proj_lin)
+        dmean_dQ_mu = self._covar_mu @ (lin_old + lin_old.T - lin_lin - lin_lin.T) @ self._covar_mu
+
+        dmean_deta_mu = np.dot(dmean_dq, dq_deta_mu) + np.trace(dmean_dQ_mu @ dQ_mu_deta_mu)
 
         lhs = dmean_dq / (self._eta_mu + 1)
         deta_mu_dq_target = lhs / -dmean_deta_mu
 
-        # return deta_mu_dq_target / (self._eta_mu + 1)
-        return deta_mu_dq_target
+        lhs = dmean_dQ_mu / (self._eta_mu + 1)
+        deta_mu_dQ_target = lhs / -dmean_deta_mu
+
+        return deta_mu_dq_target, deta_mu_dQ_target
 
     def sig_grad_baseline(self):
         dQ_deta_sig = (self._old_precision - self._target_precision) / (self._eta_sig + 1) ** 2
         dcov_dQ = 0.5 * (-self._proj_covar @ self._old_precision @ self._proj_covar + self._proj_covar)
         dcov_deta_sig = 0.5 * np.trace(
-            (-self._proj_covar @ self._old_precision @ self._proj_covar + self._proj_covar) @ dQ_deta_sig)
+            -self._proj_covar @ self._old_precision @ dQ_deta_sig @ self._proj_covar + self._proj_covar @ dQ_deta_sig)
 
         lhs = dcov_dQ / (self._eta_sig + 1)
         deta_sig_dQ_target = lhs / -dcov_deta_sig
@@ -258,13 +262,13 @@ class SplitMoreProjection(object):
 
     def sig_grad_tuned(self):
         dQ_deta_sig = (self._old_precision - self._proj_precision) / (self._eta_sig + 1)
-        dcov_dQ = -self._proj_covar @ self._old_precision @ self._proj_covar + self._proj_covar
+        dcov_dQ = - self._proj_covar @ self._old_precision @ self._proj_covar + self._proj_covar
         dcov_deta_sig = np.trace(dcov_dQ @ dQ_deta_sig)
 
         lhs = dcov_dQ / (self._eta_sig + 1)
         deta_sig_dQ_target = lhs / -dcov_deta_sig
 
-        return deta_sig_dQ_target
+        return np.zeros(self._dim), deta_sig_dQ_target
 
     @property
     def last_eta_mu(self):

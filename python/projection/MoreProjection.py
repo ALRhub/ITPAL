@@ -262,11 +262,11 @@ class MoreProjection(ITPS):
         return deta_dq, deta_dQ, np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
     def _case4_baseline(self):
-        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1)) ** 2
+        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / (self._omega + self._eta + 1) ** 2
         dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
         (self._omega + self._eta + 1)) ** 2
-        dq_domega = - (self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1)) ** 2
-        dQ_domega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1)) ** 2
+        dq_domega = - (self._eta * self._old_lin + self._target_lin) / (self._omega + self._eta + 1) ** 2
+        dQ_domega = - (self._eta * self._old_precision + self._target_precision) / (self._omega + self._eta + 1) ** 2
 
         dtm1_dq = self._proj_covar @ self._old_lin
         dtm2_dq = 2 * self._proj_covar @ self._old_precision @ self._proj_covar @ self._proj_lin

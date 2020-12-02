@@ -9,7 +9,7 @@ from python.projection.MoreProjection import MoreProjection
 diff_delta = 1e-4  # delta for the central different gradient approximator, the whole thing is kind of sensitve to that
 
 np.random.seed(0)
-dim = 10
+dim = 26
 
 mean_old = np.random.uniform(low=-1, high=1, size=dim)
 cov_old = sample_sympd(dim)

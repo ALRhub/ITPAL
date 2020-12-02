@@ -10,7 +10,7 @@ from python.util.sample import sample_sympd
 diff_delta = 1e-4  # delta for the central different gradient approximator, the whole thing is kind of sensitve to that
 
 np.random.seed(0)
-dim = 20
+dim = 10
 
 mean_old = np.random.uniform(low=-1, high=1, size=dim)
 cov_old = sample_sympd(dim)
@@ -42,29 +42,28 @@ def eval_fn(p, eps_mu, eps_sigma):
 def run_test(eps_mu, eps_sigma):
     _, _ = proj_more.more_step(eps_mu, eps_sigma, q_old.mean, q_old.covar, q_target.mean, q_target.covar)
     # deq, deQ = proj_more.backward(np.zeros((dim,)), np.zeros((dim, dim)))
-    deq, deQ = proj_more.get_last_eo_grad()
+    dmu_dq, dmu_dQ, dsigma_dq, dsigma_dQ = proj_more.get_last_eo_grad()
 
     eta_mu = proj_more.last_eta_mu
     eta_sigma = proj_more.last_eta_sig
     print("Eta_mu", eta_mu, "Eta_sigma", eta_sigma)
     numerical_grads = central_differences(lambda p: eval_fn(p, eps_mu, eps_sigma), p0, dim=2, delta=diff_delta)
-    # print("d eta_mu d q")
-    # print("analytical", deq)
-    # print("numerical", numerical_grads[0, :dim])
     # if np.any(deq != 0):
     #     print("deq fraction", deq / numerical_grads[0, :dim])
-    diff_q = numerical_grads[0, :dim] - deq
-    print("max diff  d_eta_mu d_q", np.max(np.abs(diff_q)))
-    print("mean diff  d_eta_mu d_q", np.mean(diff_q))
+    diff_q = numerical_grads[0, :dim] - dmu_dq
+    print("max diff d_eta_mu d_q", np.max(np.abs(diff_q)))
+    # print("mean diff  d_eta_mu d_q", np.mean(diff_q))
+    diff_q = numerical_grads[1, :dim] - dsigma_dq
+    print("max diff d_eta_sigma d_q", np.max(np.abs(diff_q)))
 
-    # print("d eta_mu d Q")
-    # print("analytical", deQ)
-    # print("numerical", np.reshape(numerical_grads[0, dim:], [dim, dim]))
     # if np.any(deQ != 0):
     #     print("deQ fraction", deQ / np.reshape(numerical_grads[1, dim:], [dim, dim]))
-    diff_Q = np.reshape(numerical_grads[1, dim:], [dim, dim]) - deQ
+    diff_Q = np.reshape(numerical_grads[0, dim:], [dim, dim]) - dmu_dQ
+    print("max diff d_eta_mu d_Q", np.max(np.abs(diff_Q)))
+    diff_Q = np.reshape(numerical_grads[1, dim:], [dim, dim]) - dsigma_dQ
     print("max diff d_eta_sigma d_Q", np.max(np.abs(diff_Q)))
-    print("mean diff d_eta_sigma d_Q", np.mean(diff_Q))
+    # print("mean diff d_eta_sigma d_Q", np.mean(diff_Q))
+    # print(numerical_grads)
 
 
 print("--------BOTH INACTIVE------------------")
