@@ -1,15 +1,11 @@
-import numpy as np
-from util.Gaussian import Gaussian
-from util.central_differences import central_differences
-from util.sample import sample_sympd
 import cpp_projection as proj
-from cvx.cvxlayers_projection import CVXProjector
+import numpy as np
 import tensorflow as tf
 from tensorflow_probability import distributions as tfd
 
-from projection.pytorch_op import ProjectionSimpleNet
-from torch.distributions import MultivariateNormal
-import torch
+from python.util.Gaussian import Gaussian
+from python.util.central_differences import central_differences
+from python.util.sample import sample_sympd
 
 """
 Regression test for backward pass against numerical approximation and cvxopt
@@ -32,7 +28,8 @@ q_old = Gaussian(mean_old, cov_old)
 q_target = Gaussian(mean_target, cov_target)
 samples = q_target.sample(10)
 
-proj_more = proj.MoreProjection(dim, eec=True, constrain_entropy=True)
+# proj_more = proj.MoreProjection(dim, eec=True, constrain_entropy=True)
+proj_more = proj.MoreProjection(dim, eec=True)
 
 def sym_wrapper(x):
     x = np.reshape(x, [dim, dim])

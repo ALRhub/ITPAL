@@ -1,5 +1,5 @@
 import numpy as np
-from projection.ITPS import ITPS
+from python.projection.ITPS import ITPS
 
 
 class MoreProjection(ITPS):
@@ -96,24 +96,26 @@ class MoreProjection(ITPS):
         assert self._succ, "INVALID STATE, No previous successfull execution!"
 
         deta_dq_target, deta_dQ_target, domega_dq_target, domega_dQ_target = self.get_last_eo_grad()
-        deo_dq_target = np.stack([deta_dq_target, domega_dq_target], axis=0)   #  2 x d
-        deo_dQ_target = np.stack([np.reshape(deta_dQ_target, -1), np.reshape(domega_dQ_target, -1)], axis=0) # 2 x d**2
+        deo_dq_target = np.stack([deta_dq_target, domega_dq_target], axis=0)  # 2 x d
+        deo_dQ_target = np.stack([np.reshape(deta_dQ_target, -1), np.reshape(domega_dQ_target, -1)], axis=0)  # 2 x d**2
 
-        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1)**2)
-        dq_domega = -(self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1)**2)
-        dq_deo = np.stack([dq_deta, dq_domega], axis=1)   # d x 2
+        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1) ** 2)
+        dq_domega = -(self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1) ** 2)
+        dq_deo = np.stack([dq_deta, dq_domega], axis=1)  # d x 2
 
-        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / ((self._omega + self._eta + 1)**2)
-        dQ_domega = -(self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1)**2)
-        dQ_deo = np.stack([np.reshape(dQ_deta, -1), np.reshape(dQ_domega, -1)], axis=1)   # d**2 x 2
+        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
+                    (self._omega + self._eta + 1) ** 2)
+        dQ_domega = -(self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1) ** 2)
+        dQ_deo = np.stack([np.reshape(dQ_deta, -1), np.reshape(dQ_domega, -1)], axis=1)  # d**2 x 2
 
-        t1 = dQ_deo @ deo_dQ_target + np.eye(self._dim**2) / (self._eta + self._omega + 1)
+        t1 = dQ_deo @ deo_dQ_target + np.eye(self._dim ** 2) / (self._eta + self._omega + 1)
         x = np.reshape(t1, [self._dim, self._dim, self._dim, self._dim])
         x = self._proj_precision @ self._target_precision @ x @ self._proj_covar @ self._target_precision
 
-        dq_dqtilde = np.outer(dq_deta, deta_dq_target) + np.outer(dq_domega, domega_dq_target) + np.eye(self._dim) / (self._eta + self._omega +1)
+        dq_dqtilde = np.outer(dq_deta, deta_dq_target) + np.outer(dq_domega, domega_dq_target) + np.eye(self._dim) / (
+                    self._eta + self._omega + 1)
         dmu_dmutilde = self._proj_covar @ dq_dqtilde @ self._target_precision
-        #dmu_dmutilde = self._target_precision @  dq_dqtilde @ self._proj_covar
+        # dmu_dmutilde = self._target_precision @  dq_dqtilde @ self._proj_covar
         return dmu_dmutilde, x
 
     def backward(self, d_mean, d_cov):
@@ -125,9 +127,10 @@ class MoreProjection(ITPS):
         assert self._succ, "INVALID STATE, No previous successfull execution!"
         deta_dq_target, deta_dQ_target, domega_dq_target, domega_dQ_target = self.get_last_eo_grad()
 
-        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1)**2)
-        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / ((self._omega + self._eta + 1)**2)
-        dq_domega = -(self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1)**2)
+        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1) ** 2)
+        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
+                    (self._omega + self._eta + 1) ** 2)
+        dq_domega = -(self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1) ** 2)
         dQ_domega = -(self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1) ** 2)
 
         # mean
@@ -154,34 +157,34 @@ class MoreProjection(ITPS):
         For each case (except the first) there is a "baseline" implementation, which should correspond to the
         equations in the overleaf, and a tuned version, optimized to reduce number of performed operations
         """
-        assert self._succ, "INVALID STATE, No previous successfull execution!"
-        if self._eta == 0 and self._omega == 0:    # case 1
+        assert self._succ, "INVALID STATE, No previous successful execution!"
+        if self._eta == 0 and self._omega == 0:  # case 1
             return np.zeros(self._dim), np.zeros([self._dim, self._dim]), \
                    np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
-        elif self._eta == 0 and self._omega > 0:     # case 2
+        elif self._eta == 0 and self._omega > 0:  # case 2
             at, bt, ct, dt = self._case2_tuned()
-            #ab, bb, cb, db = self._case2_baseline()
-            #print(np.max(np.abs(cb - ct)), np.max(np.abs(cb - ct)))
+            # ab, bb, cb, db = self._case2_baseline()
+            # print(np.max(np.abs(cb - ct)), np.max(np.abs(cb - ct)))
             return at, bt, ct, dt
 
-        elif self._eta > 0 and self._omega == 0:     # case 3
+        elif self._eta > 0 and self._omega == 0:  # case 3
             at, bt, ct, dt = self._case3_baseline2()
-            #ab, bb, cb, db = self._case3_baseline()
-            #print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)))
+            # ab, bb, cb, db = self._case3_baseline()
+            # print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)))
             return at, bt, ct, dt
 
         elif self._eta > 0 and self._omega > 0:
             at, bt, ct, dt = self._case4_tuned()
-            #ab, bb, cb, db = self._case4_baseline()
-            #print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)), np.max(np.abs(cb - ct)), np.max(np.abs(db - dt)))
+            # ab, bb, cb, db = self._case4_baseline()
+            # print(np.max(np.abs(ab - at)), np.max(np.abs(bb - bt)), np.max(np.abs(cb - ct)), np.max(np.abs(db - dt)))
             return at, bt, ct, dt
 
         else:
             raise AssertionError("WTF?")
 
     def _case2_baseline(self):
-        dQ_omega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1)**2)
+        dQ_omega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1) ** 2)
         lhs = np.trace(self._proj_covar @ dQ_omega)
         rhs = - self._proj_covar / (self._omega + self._eta + 1)
         domega_dQ = rhs / lhs
@@ -193,9 +196,10 @@ class MoreProjection(ITPS):
 
     def _case3_baseline2(self):
         dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1) ** 2)
-        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / ((self._omega + self._eta + 1) ** 2)
-        dq_domega = - (self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1))**2
-        dQ_domega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1))**2
+        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
+                    (self._omega + self._eta + 1) ** 2)
+        dq_domega = - (self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1)) ** 2
+        dQ_domega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1)) ** 2
 
         dtm1_dq = self._proj_covar @ self._old_lin
         dtm2_dq = 2 * self._proj_covar @ self._old_precision @ self._proj_covar @ self._proj_lin
@@ -210,15 +214,16 @@ class MoreProjection(ITPS):
         f2_dQ = dtlogdet_dQ + dttrace_dQ - 2 * dtm1_dQ + dtm2_dQ
 
         lhs = np.dot(f2_dq, dq_deta) + np.trace(f2_dQ @ dQ_deta)
-        rhs_dq = -f2_dq / (self._omega + self._eta + 1) #- dq_deta - dq_domega
-        rhs_dQ = -f2_dQ / (self._omega + self._eta + 1) #- dQ_deta - dQ_domega
+        rhs_dq = -f2_dq / (self._omega + self._eta + 1)  # - dq_deta - dq_domega
+        rhs_dQ = -f2_dQ / (self._omega + self._eta + 1)  # - dQ_deta - dQ_domega
         deta_dq = rhs_dq / lhs
         deta_dQ = rhs_dQ / lhs
         return deta_dq, deta_dQ, np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
     def _case3_baseline(self):
         dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1) ** 2)
-        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / ((self._omega + self._eta + 1) ** 2)
+        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
+                    (self._omega + self._eta + 1) ** 2)
 
         dtm1_dq = self._proj_covar @ self._old_lin
         dtm2_dq = 2 * self._proj_covar @ self._old_precision @ self._proj_covar @ self._proj_lin
@@ -257,10 +262,11 @@ class MoreProjection(ITPS):
         return deta_dq, deta_dQ, np.zeros(self._dim), np.zeros([self._dim, self._dim])
 
     def _case4_baseline(self):
-        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1))**2
-        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / ((self._omega + self._eta + 1))**2
-        dq_domega = - (self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1))**2
-        dQ_domega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1))**2
+        dq_deta = ((self._omega + 1) * self._old_lin - self._target_lin) / ((self._omega + self._eta + 1)) ** 2
+        dQ_deta = ((self._omega + 1) * self._old_precision - self._target_precision) / (
+        (self._omega + self._eta + 1)) ** 2
+        dq_domega = - (self._eta * self._old_lin + self._target_lin) / ((self._omega + self._eta + 1)) ** 2
+        dQ_domega = - (self._eta * self._old_precision + self._target_precision) / ((self._omega + self._eta + 1)) ** 2
 
         dtm1_dq = self._proj_covar @ self._old_lin
         dtm2_dq = 2 * self._proj_covar @ self._old_precision @ self._proj_covar @ self._proj_lin
@@ -287,13 +293,16 @@ class MoreProjection(ITPS):
         deta_dq = rhs_q / lhs_q_eta
         domega_dq = rhs_q / lhs_q_omega
 
-        rhs_Q_eta2 = (1 / np.trace(dtlogdet_dQ @ dQ_domega)) * (np.dot(f2_dq, dq_domega) + np.trace(f2_dQ @ dQ_domega)) * dtlogdet_dQ / (self._omega + self._eta + 1)
+        rhs_Q_eta2 = (1 / np.trace(dtlogdet_dQ @ dQ_domega)) * (
+                    np.dot(f2_dq, dq_domega) + np.trace(f2_dQ @ dQ_domega)) * dtlogdet_dQ / (
+                                 self._omega + self._eta + 1)
         rhs_Q_eta1 = - f2_dQ / (self._omega + self._eta + 1)
         rhs_Q_eta = rhs_Q_eta1 + rhs_Q_eta2
 
         deta_d_Q = rhs_Q_eta / lhs_q_eta
 
-        rhs_Q_omega2 = (1 / np.trace(dtlogdet_dQ @ dQ_deta)) * (np.dot(f2_dq, dq_deta) + np.trace(f2_dQ @ dQ_deta)) * dtlogdet_dQ / (self._omega + self._eta + 1)
+        rhs_Q_omega2 = (1 / np.trace(dtlogdet_dQ @ dQ_deta)) * (
+                    np.dot(f2_dq, dq_deta) + np.trace(f2_dQ @ dQ_deta)) * dtlogdet_dQ / (self._omega + self._eta + 1)
         rhs_Q_omega1 = - f2_dQ / (self._omega + self._eta + 1)
         rhs_Q_omega = rhs_Q_omega1 + rhs_Q_omega2
         domega_d_Q = rhs_Q_omega / lhs_q_omega
@@ -337,6 +346,3 @@ class MoreProjection(ITPS):
         domega_d_Q = (f2_deta * self._proj_covar / tr_dlogdet_deta - f2_dQ) / lhs_q_omega
 
         return deta_dq, deta_d_Q, domega_dq, domega_d_Q
-
-
-
