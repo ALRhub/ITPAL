@@ -143,26 +143,23 @@ class SplitMoreProjection(object):
         TODO: Implement backward propagation of err_cov
         """
         assert self._succ, "INVALID STATE, No previous successful execution!"
-        deta_mu_dq_target, deta_sig_dQ_target = self.get_last_eo_grad()
+        deta_mu_dq_target, deta_mu_dQ_target, _, deta_sig_dQ_target = self.get_last_eo_grad()
 
-        Q_mu = (self._eta_mu * self._old_precision + self._target_precision) / (self._eta_mu + 1)
-        covar_mu = np.linalg.solve(Q_mu, np.eye(self._dim))
+        dq_deta_mu = (self._old_lin - self._proj_lin) / (self._eta_mu + 1)
+        dQ_deta_sig = (self._old_precision - self._proj_precision) / (self._eta_sig + 1)
+        dQ_mu_deta_mu = (self._old_precision - self._precision_mu) / (self._eta_mu + 1)
 
-        dq_deta_mu = (self._eta_mu * self._old_lin - self._target_lin) / (self._eta_mu + 1) ** 2
-        dQ_deta_sig = (self._eta_sig * self._old_precision - self._target_precision) / (self._eta_sig + 1) ** 2
-
-        # mean
-        dq = covar_mu @ d_mean
+        dq = self._covar_mu @ d_mean
         dQ = - self._proj_covar @ d_cov @ self._proj_covar
-        tmp = np.outer(d_mean, Q_mu @ self._proj_mean)
-        dQ_mu = - covar_mu @ (0.5 * tmp + 0.5 * tmp.T) @ covar_mu
-        dQ_mu2 = - covar_mu @ (d_mean * self._target_lin) @ covar_mu
+        tmp = 0.5 * np.outer(d_mean, self._proj_lin)
+        dQ_mu = - self._covar_mu @ (tmp + tmp.T) @ self._covar_mu
 
-        deta_mu = np.dot(dq, dq_deta_mu) + np.trace(dQ_mu @ dq_deta_mu)
+        deta_mu = np.dot(dq, dq_deta_mu) + np.trace(dQ_mu @ dQ_mu_deta_mu)
         deta_sig = np.trace(dQ @ dQ_deta_sig)
 
         dq_target = deta_mu * deta_mu_dq_target + dq / (self._eta_mu + 1)
-        dQ_target = deta_sig * deta_sig_dQ_target + dQ / (self._eta_sig + 1) + dQ_mu / (self._eta_mu + 1)
+        dQ_target = deta_sig * deta_sig_dQ_target + deta_mu * deta_mu_dQ_target \
+                    + dQ / (self._eta_sig + 1) + dQ_mu / (self._eta_mu + 1)
 
         d_mu_target = self._target_precision @ dq_target
         tmp = np.outer(dq_target, self._target_mean)

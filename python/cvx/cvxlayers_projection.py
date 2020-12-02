@@ -14,7 +14,7 @@ class CVXProjector:
 
         solver_args = {
             "max_iters": 5000000,
-            'eps': 1e-7,
+            'eps_mu': 1e-7,
             # "raise_on_error": False
             # "verbose": True,
             # "gpu": True,
