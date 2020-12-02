@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     projector = FwdKLProjection()
 
-    #eps_mu = 0.5
+    #eps = 0.5
 
     epss = [0.01, 0.05, 0.1, 0.5, 1, 5, 10, 150]
     plt.figure()
@@ -86,6 +86,6 @@ if __name__ == "__main__":
         mean, cov = projector.project(eps, mean_old, cov_old, mean_target, cov_target)
         print(Gaussian(mean_old, cov_old).kl(Gaussian(mean, cov)))
         draw_2d_covariance(mean, cov, chisquare_val=2, c=cmap(i / len(epss)))
-    plt.legend(["old", "target"] + ["eps_mu=" + str(x) for x in epss])
+    plt.legend(["old", "target"] + ["eps=" + str(x) for x in epss])
     plt.show()
 

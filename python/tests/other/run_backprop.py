@@ -46,7 +46,7 @@ bw_analytic_mean, bw_analytic_cov = proj_more.backward(err_mean, err_cov)
 bw_grad = err_mean.T @ grad_analytic_mean
 
 #def eval_fn_mean_bw(_mean_target):
-#    proj_mean, proj_cov = proj_more.more_step(eps_mu, beta, mean_old, cov_old, _mean_target, cov_target)
+#    proj_mean, proj_cov = proj_more.more_step(eps, beta, mean_old, cov_old, _mean_target, cov_target)
 #    return proj_mean
 
 def eval_fn_mean_grad(_mean_target):
@@ -69,13 +69,13 @@ print("max diff bw analytic, grad", np.max(np.abs(bw_analytic_mean - bw_grad)))
 #def eval_fn_cov_bw(_cov_target):
 #    ct = np.reshape(_cov_target, [dim, dim])
 #    ct = 0.5 * (ct + ct.T)
-#    proj_mean, proj_cov = proj_more.more_step(eps_mu, beta, mean_old, cov_old, mean_target, ct)
+#    proj_mean, proj_cov = proj_more.more_step(eps, beta, mean_old, cov_old, mean_target, ct)
 #    return proj_cov
 
 #def eval_fn_cov(_cov_target):
 #    __cov_target = np.reshape(_cov_target, [dim, dim])
 #    __cov_target = 0.5 * (__cov_target + __cov_target.T)
-#    proj_mean, proj_cov = proj_more.more_step(eps_mu, beta, mean_old, cov_old, mean_target, __cov_target)
+#    proj_mean, proj_cov = proj_more.more_step(eps, beta, mean_old, cov_old, mean_target, __cov_target)
 #    return proj_cov
 
 #grad_numeric = central_differences(eval_fn_cov, np.reshape(cov_target, -1), dim=[dim, dim])
