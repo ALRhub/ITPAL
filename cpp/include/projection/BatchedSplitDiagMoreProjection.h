@@ -19,7 +19,8 @@ public:
                                   const mat &old_means, const mat &old_vars,
                                   const mat &target_means, const mat &target_vars);
 
-    //std::tuple<mat, mat> backward(const mat &d_means, const mat &d_vars);
+    std::tuple<mat, mat> backward(const mat &d_means, const mat &d_vars);
+
 private:
 
     double kl_diag_mean(const vec& m1, const vec& m2, const vec& cc2) const;

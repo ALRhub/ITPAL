@@ -79,6 +79,14 @@ PYBIND11_MODULE(cpp_projection, p){
            py::arg("eps_mu"), py::arg("eps_sig"), py::arg("old_mean"),
            py::arg("old_var"), py::arg("target_mean"), py::arg("target_var"));
 
+    mp.def("backward", [](SplitDiagMoreProjection* obj, dpy_arr dl_dmu_projected, dpy_arr dl_dvar_projected){
+               vec dl_dmu_target;
+               vec dl_dvar_target;
+               std::tie(dl_dmu_target, dl_dvar_target) = obj->backward(to_vec<double>(dl_dmu_projected),
+                                                                         to_vec<double>(dl_dvar_projected));
+               return std::make_tuple(from_mat<double>(dl_dmu_target), from_mat<double>(dl_dvar_target));},
+           py::arg("dl_dmu_projected"), py::arg("dl_var_projected"));
+
     /* ------------------------------------------------------------------------------
     BATCHED PROJECTION
     --------------------------------------------------------------------------------*/
@@ -166,13 +174,13 @@ PYBIND11_MODULE(cpp_projection, p){
            py::arg("old_vars"), py::arg("target_mean"), py::arg("target_vars")
     );
 
-    /*
-    bp.def("backward", [](BatchedProjection* obj, dpy_arr d_means, dpy_arr d_covs){
+
+    bsdcmp.def("backward", [](BatchedSplitDiagMoreProjection* obj, dpy_arr d_means, dpy_arr d_vars){
                mat d_means_target;
-               cube d_covs_target;
-               std::tie(d_means_target, d_covs_target) = obj->backward(to_mat<double>(d_means), to_cube<double>(d_covs));
-               return std::make_tuple(from_mat(d_means_target), from_cube(d_covs_target));
+               mat d_vars_target;
+               std::tie(d_means_target, d_vars_target) = obj->backward(to_mat<double>(d_means), to_mat<double>(d_vars));
+               return std::make_tuple(from_mat(d_means_target), from_mat(d_vars_target));
            },
-           py::arg("d_means"), py::arg("d_covs"));
-           */
+           py::arg("d_means"), py::arg("d_vars"));
+
 }

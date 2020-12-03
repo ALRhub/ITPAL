@@ -63,19 +63,30 @@ std::tuple<mat, mat> BatchedSplitDiagMoreProjection::forward(const vec &epss_mu,
     return std::make_tuple(means, vars);
 }
 
-/*
-mat BatchedDiagCovOnlyProjection::backward(const mat &d_vars) {
+
+std::tuple<mat, mat> BatchedSplitDiagMoreProjection::backward(const mat &d_means, const mat &d_vars) {
+    mat d_mus_target(size(d_means));
     mat d_vars_target(size(d_vars));
 
-    #pragma omp parallel for default(none) schedule(static) shared(d_vars, d_vars_target)
+    #pragma omp parallel for default(none) schedule(static) shared(d_means, d_vars, d_mus_target, d_vars_target)
     for (int i = 0; i < batch_size; ++i) {
-        vec d_var = d_vars.col(i);
+        vec d_mean = d_means.col(i);
+        vec d_cov = d_vars.col(i);
 
-        d_vars_target.col(i) = projection_applied.at(i) ? projectors[i].backward(d_var) : d_var;
+        if (!projection_applied.at(i)) {
+            d_mus_target.col(i) = d_mean;
+            d_vars_target.col(i) = d_cov;
+        } else {
+            vec d_mean_target;
+            vec d_cov_target;
+            std::tie(d_mean_target, d_cov_target) = projectors[i].backward(d_mean, d_cov);
+            d_mus_target.col(i) = d_mean_target;
+            d_vars_target.col(i) = d_cov_target;
+        }
     }
-    return d_vars_target;
+    return std::make_tuple(d_mus_target, d_vars_target);
 }
-*/
+
 
 double BatchedSplitDiagMoreProjection::kl_diag_mean(const vec &m1, const vec &m2, const vec &cc2) const {
     vec cc_inv = 1 / cc2;

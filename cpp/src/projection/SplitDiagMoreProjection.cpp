@@ -26,9 +26,6 @@ std::tuple<vec, vec> SplitDiagMoreProjection::forward(double eps_mu, double eps_
     this->target_prec = 1.0 / target_var;
     this->target_lin = target_prec % target_mean;
 
-    vec proj_mean;
-    vec proj_var;
-
     /** mean update **/
     nlopt::opt opt_mean(nlopt::LD_LBFGS, 1);
     opt_mean.set_min_objective([](const std::vector<double> &eta_mu, std::vector<double> &grad, void *instance){
@@ -40,8 +37,15 @@ std::tuple<vec, vec> SplitDiagMoreProjection::forward(double eps_mu, double eps_
         succ_mu = NlOptUtil::valid_despite_failure_eta(opt_eta_mu, grad);
     }
     if (succ_mu){
-        lp = opt_eta_mu[0];
-        proj_mean = (target_lin + lp * old_lin) / (target_prec + lp * old_prec);
+        eta_mu = opt_eta_mu[0];
+
+        proj_lin = (target_lin + eta_mu * old_lin) / (eta_mu + 1); // TODO / (1+eta)?)
+        prec_mu =  (target_prec + eta_mu * old_prec) / (eta_mu + 1);
+        cov_mu = 1.0 / prec_mu;
+        proj_mean = proj_lin / prec_mu;
+     //   prec_mu = prec_mu (eta_mu + 1);
+        //lp = opt_eta_mu[0];
+        //proj_mean = (target_lin + eta_mu * old_lin) / (target_prec + eta_mu * old_prec);
     } else {
         throw std::logic_error("NLOPT failure");
     }
@@ -57,8 +61,11 @@ std::tuple<vec, vec> SplitDiagMoreProjection::forward(double eps_mu, double eps_
         succ_sig = NlOptUtil::valid_despite_failure_eta(opt_eta_sig, grad);
     }
     if (succ_sig){
-        lp = opt_eta_sig[0];
-        proj_var = (lp + 1.0) / (target_prec + lp * old_prec);
+       // lp = opt_eta_sig[0];
+       // proj_var = (lp + 1.0) / (target_prec + lp * old_prec);
+        eta_sig = opt_eta_sig[0];
+        proj_var = (eta_sig + 1.0) / (target_prec + eta_sig * old_prec);
+        proj_prec = 1 / proj_var;
     } else {
         throw std::logic_error("NLOPT failure");
     }
@@ -103,4 +110,62 @@ double SplitDiagMoreProjection::dual_cov(const std::vector<double> &eta_sig, std
         this->grad[0] = grad[0];
         return 1e12;
     }
+}
+
+std::tuple<vec, vec> SplitDiagMoreProjection::backward(const vec &d_means, const vec &d_vars){
+    vec deta_mu_dq_target, deta_sig_dQ_target;
+    vec deta_mu_dQ_target;
+
+    if (eta_mu > 0) {
+        std::tie(deta_mu_dq_target, deta_mu_dQ_target) = last_eta_mu_grad();
+    } else {
+        deta_mu_dq_target = vec(d_means.size(), fill::zeros);
+        deta_mu_dQ_target = vec(d_vars.size(), fill::zeros);
+    }
+    if (eta_sig > 0) {
+        deta_sig_dQ_target = last_eta_sig_grad();
+    }
+    vec dq_deta_mu = (old_lin - proj_lin) / (eta_mu + 1);
+    vec dQ_mu_deta_mu = (old_prec - prec_mu) / (eta_mu + 1);
+    vec dQ_deta_sig = (old_prec - proj_prec) / (eta_sig + 1);
+
+    vec dq = cov_mu %  d_means;
+    vec dQ = - proj_var % d_vars % proj_var;
+    vec dQ_mu = - cov_mu % d_means % proj_lin % cov_mu;
+
+    double deta_mu = dot(dq, dq_deta_mu) + dot(dQ_mu, dQ_mu_deta_mu);
+    double deta_sig = dot(dQ, dQ_deta_sig);
+
+    vec dq_dtarget = deta_mu * deta_mu_dq_target + dq / (eta_mu + 1);
+    vec dQ_dtarget = deta_sig * deta_sig_dQ_target + deta_mu * deta_mu_dQ_target
+            + dQ / (eta_sig + 1) + dQ_mu / (eta_mu + 1);
+
+    vec d_mu_target = target_prec % dq_dtarget;
+    vec d_cov_target = - target_prec % (dq_dtarget % target_mean + dQ_dtarget) % target_prec;
+
+    return std::make_tuple(d_mu_target, d_cov_target);
+}
+
+
+
+std::tuple<vec, vec> SplitDiagMoreProjection::last_eta_mu_grad() const {
+    vec dQ_mu_deta_mu = (old_prec - prec_mu) / (eta_mu + 1);
+    vec dq_deta_mu = (old_lin - proj_lin) / (eta_mu + 1);
+
+    vec dmean_dq = 2 * cov_mu % (old_prec % proj_mean - old_lin);
+    vec dmean_dQ_mu = cov_mu % (2 * proj_lin % (old_lin  - old_prec % cov_mu % proj_lin)) % cov_mu;
+
+    double dmean_deta_mu = dot(dmean_dq , dq_deta_mu) + dot(dmean_dQ_mu, dQ_mu_deta_mu);
+    vec lhs_mu = dmean_dq / (eta_mu + 1);
+    vec lhs_sig = dmean_dQ_mu / (eta_mu + 1);
+
+    return std::make_tuple(lhs_mu / - dmean_deta_mu, lhs_sig / - dmean_deta_mu);
+}
+
+vec SplitDiagMoreProjection::last_eta_sig_grad() const {
+    vec dQ_deta_sig = (old_prec - proj_prec) / (eta_sig + 1);
+    vec dvar_dQ = - proj_var % old_prec % proj_var + proj_var;
+    double dvar_deta_sig = dot(dvar_dQ, dQ_deta_sig);
+    vec lhs = dvar_dQ / (eta_sig + 1);
+    return lhs / - dvar_deta_sig;
 }

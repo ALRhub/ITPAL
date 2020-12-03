@@ -19,8 +19,8 @@ run_cpp = True  # whether to run cpp implementation
 run_py = True   # whether to run python implementation
 regression_test = True #whether to run the regression tests
 
-run_py_torch = False # whether to run pytorch with py implementation layers
-run_cpp_torch = False # whether to run pytorch with cpp implementation layers
+run_py_torch = True # whether to run pytorch with py implementation layers
+run_cpp_torch = True # whether to run pytorch with cpp implementation layers
 
 
 
