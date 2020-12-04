@@ -3,9 +3,12 @@
 
 #include <projection/MoreProjection.h>
 #include <projection/BatchedProjection.h>
+
 #include <projection/DiagCovOnlyMoreProjection.h>
 #include <projection/BatchedDiagCovOnlyProjection.h>
 
+#include <projection/SplitDiagMoreProjection.h>
+#include <projection/BatchedSplitDiagMoreProjection.h>
 
 namespace py = pybind11;
 
@@ -58,6 +61,32 @@ PYBIND11_MODULE(cpp_projection, p){
     dcop.def_property_readonly("last_eta", &DiagCovOnlyMoreProjection::get_last_eta);
     dcop.def_property_readonly("was_succ", &DiagCovOnlyMoreProjection::was_succ);
 
+
+    /* ------------------------------------------------------------------------------
+    SPLIT DIAG COVAR PROJECTION
+    --------------------------------------------------------------------------------*/
+    py::class_<SplitDiagMoreProjection> sdcmp(p, "SplitDiagMoreProjection");
+
+    sdcmp.def(py::init([](uword dim, int max_eval){return new SplitDiagMoreProjection(dim, max_eval);}),
+           py::arg("dim"), py::arg("max_eval") = 100);
+
+    sdcmp.def("forward", [](SplitDiagMoreProjection* obj, double eps_mu, double eps_sig,
+                                   dpy_arr old_mean, dpy_arr old_var,
+                                   dpy_arr target_mean, dpy_arr target_var){
+               return from_mat<double>(obj->forward(eps_mu, eps_sig,
+                                                    to_vec<double>(old_mean), to_vec<double>(old_var),
+                                                    to_vec<double>(target_mean), to_vec<double>(target_var)));},
+           py::arg("eps_mu"), py::arg("eps_sig"), py::arg("old_mean"),
+           py::arg("old_var"), py::arg("target_mean"), py::arg("target_var"));
+
+    mp.def("backward", [](SplitDiagMoreProjection* obj, dpy_arr dl_dmu_projected, dpy_arr dl_dvar_projected){
+               vec dl_dmu_target;
+               vec dl_dvar_target;
+               std::tie(dl_dmu_target, dl_dvar_target) = obj->backward(to_vec<double>(dl_dmu_projected),
+                                                                         to_vec<double>(dl_dvar_projected));
+               return std::make_tuple(from_mat<double>(dl_dmu_target), from_mat<double>(dl_dvar_target));},
+           py::arg("dl_dmu_projected"), py::arg("dl_var_projected"));
+
     /* ------------------------------------------------------------------------------
     BATCHED PROJECTION
     --------------------------------------------------------------------------------*/
@@ -107,7 +136,7 @@ PYBIND11_MODULE(cpp_projection, p){
             dpy_arr target_vars){
            try {
                    mat vars = obj->forward(to_vec<double>(epss), to_mat<double>(old_vars), to_mat<double>(target_vars));
-                   return from_mat<double>(vars);
+                   return from_mat_enforce_mat<double>(vars);
                } catch (std::invalid_argument &e) {
                    PyErr_SetString(PyExc_AssertionError, e.what());
                }
@@ -117,5 +146,41 @@ PYBIND11_MODULE(cpp_projection, p){
 
     bdcop.def("backward", [](BatchedDiagCovOnlyProjection* obj, dpy_arr d_vars){
                mat d_vars_d_target = obj->backward(to_mat<double>(d_vars));
-               return from_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
+               return from_mat_enforce_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
+
+    /* ------------------------------------------------------------------------------
+    BATCHED SPLIT DIAG COVAR PROJECTION
+    --------------------------------------------------------------------------------*/
+    py::class_<BatchedSplitDiagMoreProjection> bsdcmp(p, "BatchedSplitDiagMoreProjection");
+    bsdcmp.def(py::init([](uword batch_size, uword dim, int max_eval){
+               return new BatchedSplitDiagMoreProjection(batch_size, dim, max_eval);}),
+           py::arg("batchsize"), py::arg("dim"), py::arg("max_eval") = 100);
+
+    bsdcmp.def("forward", [](BatchedSplitDiagMoreProjection* obj, dpy_arr epss, dpy_arr betas,
+                         dpy_arr old_means, dpy_arr old_vars, dpy_arr target_means, dpy_arr target_vars){
+               mat means;
+               mat vars;
+               try {
+                   std::tie(means, vars) = obj->forward(
+                           to_vec<double>(epss), to_vec<double>(betas),
+                           to_mat<double>(old_means), to_mat<double>(old_vars),
+                           to_mat<double>(target_means), to_mat<double>(target_vars));
+               } catch (std::invalid_argument &e) {
+                   PyErr_SetString(PyExc_AssertionError, e.what());
+               }
+               return std::make_tuple(from_mat_enforce_mat(means), from_mat_enforce_mat(vars));
+           },
+           py::arg("epss"), py::arg("beta"), py::arg("old_mean"),
+           py::arg("old_vars"), py::arg("target_mean"), py::arg("target_vars")
+    );
+
+
+    bsdcmp.def("backward", [](BatchedSplitDiagMoreProjection* obj, dpy_arr d_means, dpy_arr d_vars){
+               mat d_means_target;
+               mat d_vars_target;
+               std::tie(d_means_target, d_vars_target) = obj->backward(to_mat<double>(d_means), to_mat<double>(d_vars));
+               return std::make_tuple(from_mat_enforce_mat(d_means_target), from_mat_enforce_mat(d_vars_target));
+           },
+           py::arg("d_means"), py::arg("d_vars"));
+
 }
