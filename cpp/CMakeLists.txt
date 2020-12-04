@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.12)
 project(IPP)
 
 add_definitions(-std=c++11)
+#add_definitions(-stdlib=libc++)
 
 find_package(OpenMP REQUIRED)
 find_library(gfortran REQUIRED)
