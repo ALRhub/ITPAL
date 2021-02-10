@@ -7,7 +7,7 @@ from python.util.sample import sample_sympd
 
 np.random.seed(0)
 dim = 15
-batch_size = 15
+batch_size = 1
 
 mean_old = np.random.uniform(low=-1, high=1, size=(batch_size, dim))
 cov_old = np.exp(np.random.uniform(low=-0.5, high=0.5, size=(batch_size, dim)))

@@ -156,7 +156,7 @@ PYBIND11_MODULE(cpp_projection, p){
             dpy_arr target_vars){
            try {
                    mat vars = obj->forward(to_vec<double>(epss), to_mat<double>(old_vars), to_mat<double>(target_vars));
-                   return from_mat<double>(vars);
+                   return from_mat_enforce_mat<double>(vars);
                } catch (std::invalid_argument &e) {
                    PyErr_SetString(PyExc_AssertionError, e.what());
                }
@@ -166,7 +166,7 @@ PYBIND11_MODULE(cpp_projection, p){
 
     bdcop.def("backward", [](BatchedDiagCovOnlyProjection* obj, dpy_arr d_vars){
                mat d_vars_d_target = obj->backward(to_mat<double>(d_vars));
-               return from_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
+               return from_mat_enforce_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
 
     /* ------------------------------------------------------------------------------
     BATCHED DIAG COVAR ONLY PROJECTION
@@ -212,7 +212,7 @@ PYBIND11_MODULE(cpp_projection, p){
                } catch (std::invalid_argument &e) {
                    PyErr_SetString(PyExc_AssertionError, e.what());
                }
-               return std::make_tuple(from_mat(means), from_mat(vars));
+               return std::make_tuple(from_mat_enforce_mat(means), from_mat_enforce_mat(vars));
            },
            py::arg("epss"), py::arg("beta"), py::arg("old_mean"),
            py::arg("old_vars"), py::arg("target_mean"), py::arg("target_vars")
@@ -223,7 +223,7 @@ PYBIND11_MODULE(cpp_projection, p){
                mat d_means_target;
                mat d_vars_target;
                std::tie(d_means_target, d_vars_target) = obj->backward(to_mat<double>(d_means), to_mat<double>(d_vars));
-               return std::make_tuple(from_mat(d_means_target), from_mat(d_vars_target));
+               return std::make_tuple(from_mat_enforce_mat(d_means_target), from_mat_enforce_mat(d_vars_target));
            },
            py::arg("d_means"), py::arg("d_vars"));
 

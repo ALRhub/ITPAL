@@ -121,6 +121,8 @@ std::tuple<vec, vec> SplitDiagMoreProjection::backward(const vec &d_means, const
     }
     if (eta_sig > 0) {
         deta_sig_dQ_target = last_eta_sig_grad();
+    } else {
+        deta_sig_dQ_target = vec(d_vars.size(), fill::zeros);
     }
     vec dq_deta_mu = (old_lin - proj_lin) / (eta_mu + 1);
     vec dQ_mu_deta_mu = (old_prec - prec_mu) / (eta_mu + 1);
