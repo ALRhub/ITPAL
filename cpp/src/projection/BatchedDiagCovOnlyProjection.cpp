@@ -32,15 +32,12 @@ mat BatchedDiagCovOnlyProjection::forward(const vec &epss, const mat &old_vars, 
         } else {
             try {
                 vec var = projectors[i].forward(eps, old_var, target_var);
-                //etas.at(i) = projectors[i].get_last_eta();
                 vars.col(i) = var;
                 projection_applied.at(i) = true;
-		        //proj++;
             } catch (std::logic_error &e) {
                 stst << "Failure during projection " << i << ": " << e.what() << " ";
                 failed = true;
             }
-          
         }
     }
     if (failed) {

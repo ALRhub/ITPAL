@@ -31,21 +31,18 @@ std::tuple<vec, vec> SplitDiagMoreProjection::forward(double eps_mu, double eps_
     opt_mean.set_min_objective([](const std::vector<double> &eta_mu, std::vector<double> &grad, void *instance){
         return ((SplitDiagMoreProjection *) instance)->dual_mean(eta_mu, grad);}, this);
     std::vector<double> opt_eta_mu;
-    std::tie(succ_mu, opt_eta_mu) = NlOptUtil::opt_dual_eta(opt_mean, 0.0, max_eval);
+    std::tie(succ_mu, opt_eta_mu) = NlOptUtil::opt_dual_1lp(opt_mean, 0.0, max_eval);
     if (!succ_mu) {
         opt_eta_mu[0] = lp;
-        succ_mu = NlOptUtil::valid_despite_failure_eta(opt_eta_mu, grad);
+        succ_mu = NlOptUtil::valid_despite_failure_1lp(opt_eta_mu, grad);
     }
     if (succ_mu){
         eta_mu = opt_eta_mu[0];
 
-        proj_lin = (target_lin + eta_mu * old_lin) / (eta_mu + 1); // TODO / (1+eta)?)
+        proj_lin = (target_lin + eta_mu * old_lin) / (eta_mu + 1);
         prec_mu =  (target_prec + eta_mu * old_prec) / (eta_mu + 1);
         cov_mu = 1.0 / prec_mu;
         proj_mean = proj_lin / prec_mu;
-     //   prec_mu = prec_mu (eta_mu + 1);
-        //lp = opt_eta_mu[0];
-        //proj_mean = (target_lin + eta_mu * old_lin) / (target_prec + eta_mu * old_prec);
     } else {
         throw std::logic_error("NLOPT failure");
     }
@@ -55,10 +52,10 @@ std::tuple<vec, vec> SplitDiagMoreProjection::forward(double eps_mu, double eps_
     opt_var.set_min_objective([](const std::vector<double> &eta_sig, std::vector<double> &grad, void *instance){
         return ((SplitDiagMoreProjection *) instance)->dual_cov(eta_sig, grad);}, this);
     std::vector<double> opt_eta_sig;
-    std::tie(succ_sig, opt_eta_sig) = NlOptUtil::opt_dual_eta(opt_var, 0.0, max_eval);
+    std::tie(succ_sig, opt_eta_sig) = NlOptUtil::opt_dual_1lp(opt_var, 0.0, max_eval);
     if (!succ_sig) {
         opt_eta_sig[0] = lp;
-        succ_sig = NlOptUtil::valid_despite_failure_eta(opt_eta_sig, grad);
+        succ_sig = NlOptUtil::valid_despite_failure_1lp(opt_eta_sig, grad);
     }
     if (succ_sig){
        // lp = opt_eta_sig[0];

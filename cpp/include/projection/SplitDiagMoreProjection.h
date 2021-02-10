@@ -21,7 +21,6 @@ public:
 
     std::tuple<vec, vec> backward(const vec &d_means, const vec &d_vars);
 
-    double get_last_lp() const { return lp;};
     bool was_succ() const {return succ_mu && succ_sig;};
 
 private:
@@ -32,8 +31,6 @@ private:
 
     double dual_mean(std::vector<double> const &eta_mu, std::vector<double> &grad);
     double dual_cov(std::vector<double> const &eta_sig, std::vector<double> &grad);
-
-    //std::tuple<vec, mat> new_params_internal(double eta, double omega);
 
     double eps_mu, eps_sig;
     double eta_mu, eta_sig;

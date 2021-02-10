@@ -41,13 +41,13 @@ std::tuple<vec, mat> MoreProjection::forward(double eps, double beta,
     std::vector<double> opt_eta_omega;
 
     std::tie(succ, opt_eta_omega) =
-            NlOptUtil::opt_dual_eta_omega(opt, 0.0, eec ? -1e12 : 0.0, max_eval);
+            NlOptUtil::opt_dual_2lp(opt, 0.0, eec ? -1e12 : 0.0, max_eval);
     opt_eta_omega[1] = constrain_entropy ? opt_eta_omega[1] : 0.0;
 
     if (!succ) {
         opt_eta_omega[0] = eta;
         opt_eta_omega[1] = constrain_entropy ? omega : 0.0;
-        succ = NlOptUtil::valid_despite_failure_eta_omega(opt_eta_omega, grad);
+        succ = NlOptUtil::valid_despite_failure_2lp(opt_eta_omega, grad);
     }
 
     /** Post process**/
@@ -144,7 +144,6 @@ double MoreProjection::dual(std::vector<double> const &eta_omega, std::vector<do
 
 std::tuple<vec, mat, vec, mat> MoreProjection::last_eo_grad() const {
     /** case 1, neither active **/
-    // Todo: check not for == 0 but for < some small value?
     if(eta == 0.0 && omega == 0.0){
         return std::make_tuple(vec(dim, fill::zeros), mat(dim, dim, fill::zeros),
                                vec(dim, fill::zeros), mat(dim, dim, fill::zeros));
