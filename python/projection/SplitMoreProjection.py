@@ -162,8 +162,8 @@ class SplitMoreProjection(object):
                     + dQ / (self._eta_sig + 1) + dQ_mu / (self._eta_mu + 1)
 
         d_mu_target = self._target_precision @ dq_target
-        tmp = np.outer(dq_target, self._target_mean)
-        d_cov_target = - self._target_precision @ (0.5 * tmp + 0.5 * tmp.T + dQ_target) @ self._target_precision
+        tmp = 0.5 * np.outer(dq_target, self._target_mean)
+        d_cov_target = - self._target_precision @ (tmp + tmp.T + dQ_target) @ self._target_precision
 
         return d_mu_target, d_cov_target
 

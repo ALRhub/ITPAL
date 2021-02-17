@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(IPP)
-
 add_definitions(-std=c++11)
 
 find_package(OpenMP REQUIRED)
@@ -28,6 +27,8 @@ include_directories(include)
 add_library(projectionlib SHARED
         src/projection/MoreProjection.cpp
         src/projection/BatchedProjection.cpp
+        src/projection/CovOnlyMoreProjection.cpp
+        src/projection/BatchedCovOnlyProjection.cpp
         src/projection/DiagCovOnlyMoreProjection.cpp
         src/projection/BatchedDiagCovOnlyProjection.cpp
         src/projection/SplitDiagMoreProjection.cpp
