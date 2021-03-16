@@ -10,6 +10,9 @@
 #include <projection/SplitDiagMoreProjection.h>
 #include <projection/BatchedSplitDiagMoreProjection.h>
 
+#include <projection/CovOnlyMoreProjection.h>
+#include <projection/BatchedCovOnlyProjection.h>
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(cpp_projection, p){
@@ -61,6 +64,24 @@ PYBIND11_MODULE(cpp_projection, p){
     dcop.def_property_readonly("last_eta", &DiagCovOnlyMoreProjection::get_last_eta);
     dcop.def_property_readonly("was_succ", &DiagCovOnlyMoreProjection::was_succ);
 
+    /* ------------------------------------------------------------------------------
+    COVAR ONLY PROJECTION
+    --------------------------------------------------------------------------------*/
+    py::class_<CovOnlyMoreProjection> cop(p, "CovOnlyMoreProjection");
+
+    cop.def(py::init([](uword dim, int max_eval){return new CovOnlyMoreProjection(dim, max_eval);}),
+             py::arg("dim"), py::arg("max_eval") = 100);
+
+    cop.def("forward", [](CovOnlyMoreProjection* obj, double eps, dpy_arr old_covar, dpy_arr target_covar){
+                 return from_mat<double>(obj->forward(eps, to_mat<double>(old_covar), to_mat<double>(target_covar)));},
+             py::arg("eps"),py::arg("old_covar"), py::arg("target_covar"));
+
+    cop.def("backward", [](CovOnlyMoreProjection* obj, dpy_arr dl_dcovar_projected){
+                 return from_mat<double>(obj->backward(to_mat<double>(dl_dcovar_projected)));},
+             py::arg("dl_dcovar_projected"));
+
+    cop.def_property_readonly("last_eta", &CovOnlyMoreProjection::get_last_eta);
+    cop.def_property_readonly("was_succ", &CovOnlyMoreProjection::was_succ);
 
     /* ------------------------------------------------------------------------------
     SPLIT DIAG COVAR PROJECTION
@@ -125,7 +146,6 @@ PYBIND11_MODULE(cpp_projection, p){
 
     /* ------------------------------------------------------------------------------
     BATCHED DIAG COVAR ONLY PROJECTION
-
     --------------------------------------------------------------------------------*/
     py::class_<BatchedDiagCovOnlyProjection> bdcop(p, "BatchedDiagCovOnlyProjection");
     bdcop.def(py::init([](uword batch_size, uword dim, int max_eval){
@@ -147,6 +167,30 @@ PYBIND11_MODULE(cpp_projection, p){
     bdcop.def("backward", [](BatchedDiagCovOnlyProjection* obj, dpy_arr d_vars){
                mat d_vars_d_target = obj->backward(to_mat<double>(d_vars));
                return from_mat_enforce_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
+
+    /* ------------------------------------------------------------------------------
+    BATCHED DIAG COVAR ONLY PROJECTION
+    --------------------------------------------------------------------------------*/
+    py::class_<BatchedCovOnlyProjection> bcop(p, "BatchedCovOnlyProjection");
+    bcop.def(py::init([](uword batch_size, uword dim, int max_eval){
+                  return new BatchedCovOnlyProjection(batch_size, dim, max_eval);}),
+              py::arg("batchsize"), py::arg("dim"), py::arg("max_eval") = 100);
+
+    bcop.def("forward", [](BatchedCovOnlyProjection* obj, dpy_arr epss, dpy_arr old_vars,
+                            dpy_arr target_vars){
+                  try {
+                      cube covars = obj->forward(to_vec<double>(epss), to_cube<double>(old_vars), to_cube<double>(target_vars));
+                      return from_cube<double>(covars);
+                  } catch (std::invalid_argument &e) {
+                      PyErr_SetString(PyExc_AssertionError, e.what());
+                  }
+              },
+              py::arg("epss"),py::arg("old_covar"), py::arg("target_covar")
+    );
+
+    bcop.def("backward", [](BatchedCovOnlyProjection* obj, dpy_arr d_vars){
+        cube d_covars_d_target = obj->backward(to_cube<double>(d_vars));
+        return from_cube<double>(d_covars_d_target);}, py::arg("d_vars"));
 
     /* ------------------------------------------------------------------------------
     BATCHED SPLIT DIAG COVAR PROJECTION

@@ -49,7 +49,6 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
                 stst << "Failure during projection " << i << ": " << e.what() << " ";
                 failed = true;
             }
-            //std::cout << mean << cov;
         } else {
             mat occ = chol(old_cov, "lower");
             mat tcc = chol(target_cov, "lower");
@@ -71,7 +70,6 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
                     stst << "Failure during projection " << i << ": " << e.what() << " ";
                     failed = true;
                 }
-                //std::cout << mean << cov;
 
             }
         }
@@ -79,9 +77,6 @@ std::tuple<mat, cube> BatchedProjection::forward(const vec &epss, const vec &bet
     if (failed) {
         throw std::invalid_argument(stst.str());
     }
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-//    cout << "time " << duration.count() << endl;
     return std::make_tuple(means, covs);
 }
 

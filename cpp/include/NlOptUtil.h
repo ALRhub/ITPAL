@@ -8,27 +8,17 @@
 
 class NlOptUtil{
 public:
-    static std::string get_nlopt_err_string(nlopt::result opt_res){
-        std::string err;
-        switch (opt_res){
-            case nlopt::FAILURE: err = "Failure"; break;
-            case nlopt::INVALID_ARGS: err = "Invalid Arguments"; break;
-            case nlopt::OUT_OF_MEMORY: err = "Out of Memory"; break;
-            case nlopt::ROUNDOFF_LIMITED: err = "Roundoff Limited"; break;
-            case nlopt::FORCED_STOP: err = "Force Stop"; break;
-            case nlopt::SUCCESS: err = "Success"; break;
-            case nlopt::STOPVAL_REACHED: err = "Stop Value Reached"; break;
-            case nlopt::FTOL_REACHED: err = "FTOL Reached"; break;
-            case nlopt::XTOL_REACHED: err = "XTOL Reached"; break;
-            case nlopt::MAXEVAL_REACHED: err = "max eval reached"; break;
-            case nlopt::MAXTIME_REACHED: err = "max time reached"; break;
-            default: err = "None of above"; break;
-            }
-        return err;
-    }
 
-    static std::tuple<bool, std::vector<double> > opt_dual_eta_omega(nlopt::opt& opt,
-            double lower_bound_eta, double lower_bound_omega, int max_eval){
+    static std::tuple<bool, std::vector<double> > opt_dual_2lp(
+            nlopt::opt& opt, double lower_bound_eta, double lower_bound_omega, int max_eval){
+        /* setting max_eval, even is the number much higher than the number of needed iterations speeds up the
+         * optimization by a lot (~ 2 orders of magnitude) for some reason ("compiler magic :-)" ).
+         * - The number can be adapted at runtime
+         * - This throws an error if the max_number of iterations is actually needed
+         * - I took it to the extrem and the speed up even works with max_eval=1000, usually less than 20 evals are
+         *   needed for the dual
+         * - If anyone finds this and has insights to why this works, please write me an email (philipp.becker@kit.edu)
+         */
         std::vector<double> lower_bound(2);
         lower_bound[0] = lower_bound_eta;
         lower_bound[1] = lower_bound_omega;
@@ -50,7 +40,8 @@ public:
         return std::make_tuple(res > 0, eta_omega);
     }
 
-    static std::tuple<bool, std::vector<double> > opt_dual_eta(nlopt::opt& opt, double lower_bound_eta, int max_eval){
+    static std::tuple<bool, std::vector<double> > opt_dual_1lp(nlopt::opt& opt, double lower_bound_eta, int max_eval){
+        /* max eval, same logic as above */
         std::vector<double> lower_bound(1);
         lower_bound[0] = lower_bound_eta;
         opt.set_lower_bounds(lower_bound);
@@ -71,7 +62,7 @@ public:
         return std::make_tuple(res > 0, eta);
     }
 
-    static bool valid_despite_failure_eta_omega(std::vector<double>& eta_omega, std::vector<double>& grad){
+    static bool valid_despite_failure_2lp(std::vector<double>& eta_omega, std::vector<double>& grad){
         /*NLOPT sometimes throws errors because the dual and gradients do not fit together anymore for numerical reasons
          * This problem becomes severe for high dimensional data.
          * However, that happens mostly after the algorithm is almost converged. We check for those instances and just
@@ -96,7 +87,7 @@ public:
     }
 
 
-    static bool valid_despite_failure_eta(std::vector<double>& lp, std::vector<double>& grad){
+    static bool valid_despite_failure_1lp(std::vector<double>& lp, std::vector<double>& grad){
         /*NLOPT sometimes throws errors because the dual and gradients do not fit together anymore for numerical reasons
          * This problem becomes severe for high dimensional data.
          * However, that happens mostly after the algorithm is almost converged. We check for those instances and just

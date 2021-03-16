@@ -58,9 +58,9 @@ class CMakeBuild(build_ext):
 
 setup(
     name='CppProjection',
-    version='0.0.0',
+    version='1.0.0',
     author='Philipp Becker',
-    author_email='philippbecker93@gmail.com',
+    author_email='philipp.becker@kit.edu',
     description='',
     long_description='',
     ext_modules=[CMakeExtension('cmake_example')],

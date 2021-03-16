@@ -4,7 +4,6 @@ DiagCovOnlyMoreProjection::DiagCovOnlyMoreProjection(uword dim, int max_eval) :
     dim(dim),
     max_eval(max_eval)
 {
-    //dual_const_part = dim * log(2 * M_PI);
     omega_offset = 1.0;  // Default value, might change due to rescaling!
 }
 
@@ -20,31 +19,30 @@ vec DiagCovOnlyMoreProjection::forward(double eps, const vec &old_var, const vec
 
     old_logdet = - 2 * sum(log(old_chol_prec + 1e-25));
 
-    //old_term = -0.5 * (old_logdet + dual_const_part);
     kl_const_part = old_logdet - dim;
+
     /** Otpimize **/
     nlopt::opt opt(nlopt::LD_LBFGS, 1);
 
     opt.set_min_objective([](const std::vector<double> &eta, std::vector<double> &grad, void *instance){
         return ((DiagCovOnlyMoreProjection *) instance)->dual(eta, grad);}, this);
 
-    std::vector<double> opt_eta_omega;
+    std::vector<double> opt_eta;
 
-    std::tie(succ, opt_eta_omega) = NlOptUtil::opt_dual_eta(opt, 0.0, max_eval);
+    std::tie(succ, opt_eta) = NlOptUtil::opt_dual_1lp(opt, 0.0, max_eval);
     if (!succ) {
-        opt_eta_omega[0] = eta;
-        succ = NlOptUtil::valid_despite_failure_eta(opt_eta_omega, grad);
+        opt_eta[0] = eta;
+        succ = NlOptUtil::valid_despite_failure_1lp(opt_eta, grad);
     }
 
     /** Post process**/
     if (succ) {
-        eta = opt_eta_omega[0];
+        eta = opt_eta[0];
 
         projected_prec = (eta * old_prec + target_prec) / (eta + omega_offset);
         projected_var = 1.0 / projected_prec;
     } else{
         throw std::logic_error("NLOPT failure");
-        //res = std::make_tuple(vec(dim, fill::zeros), mat(dim, dim, fill::zeros));
     }
     return projected_var;
 }
@@ -57,8 +55,7 @@ vec DiagCovOnlyMoreProjection::backward(const vec &d_cov) {
     }
     /** Prepare **/
 
-    vec deta_dQ_target;
-    deta_dQ_target = last_eta_grad();
+    vec deta_dQ_target = last_eta_grad();
 
     double eo = omega_offset + eta;
     double eo_squared = eo * eo;
