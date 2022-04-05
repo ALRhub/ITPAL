@@ -17,8 +17,8 @@ include_directories("/home/otf2rng/cpp/nlopt" "/home/otf2rng/cpp/nlopt/src/api" 
 link_directories("/home/otf2rng/cpp/nlopt" "/home/otf2rng/cpp/OpenBLAS/lib" "/home/otf2rng/cpp/lapack")
 ### END OF STUFF THE NEEDS TO BE CHANGED ##################################
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas")

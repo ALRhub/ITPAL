@@ -72,9 +72,9 @@ PYBIND11_MODULE(cpp_projection, p){
     cop.def(py::init([](uword dim, int max_eval){return new CovOnlyMoreProjection(dim, max_eval);}),
              py::arg("dim"), py::arg("max_eval") = 100);
 
-    cop.def("forward", [](CovOnlyMoreProjection* obj, double eps, dpy_arr old_covar, dpy_arr target_covar){
-                 return from_mat<double>(obj->forward(eps, to_mat<double>(old_covar), to_mat<double>(target_covar)));},
-             py::arg("eps"),py::arg("old_covar"), py::arg("target_covar"));
+    cop.def("forward", [](CovOnlyMoreProjection* obj, double eps, dpy_arr old_chol, dpy_arr target_covar){
+                 return from_mat<double>(obj->forward(eps, to_mat<double>(old_chol), to_mat<double>(target_covar)));},
+             py::arg("eps"),py::arg("old_chol"),py::arg("target_covar"));
 
     cop.def("backward", [](CovOnlyMoreProjection* obj, dpy_arr dl_dcovar_projected){
                  return from_mat<double>(obj->backward(to_mat<double>(dl_dcovar_projected)));},
@@ -169,23 +169,24 @@ PYBIND11_MODULE(cpp_projection, p){
                return from_mat_enforce_mat<double>(d_vars_d_target);}, py::arg("d_vars"));
 
     /* ------------------------------------------------------------------------------
-    BATCHED DIAG COVAR ONLY PROJECTION
+    BATCHED COVAR ONLY PROJECTION
     --------------------------------------------------------------------------------*/
     py::class_<BatchedCovOnlyProjection> bcop(p, "BatchedCovOnlyProjection");
     bcop.def(py::init([](uword batch_size, uword dim, int max_eval){
                   return new BatchedCovOnlyProjection(batch_size, dim, max_eval);}),
               py::arg("batchsize"), py::arg("dim"), py::arg("max_eval") = 100);
 
-    bcop.def("forward", [](BatchedCovOnlyProjection* obj, dpy_arr epss, dpy_arr old_vars,
-                            dpy_arr target_vars){
+    bcop.def("forward", [](BatchedCovOnlyProjection* obj, dpy_arr epss, dpy_arr old_chols,
+            dpy_arr target_chols, dpy_arr target_vars){
                   try {
-                      cube covars = obj->forward(to_vec<double>(epss), to_cube<double>(old_vars), to_cube<double>(target_vars));
+                      cube covars = obj->forward(to_vec<double>(epss), to_cube<double>(old_chols),
+                                            to_cube<double>(target_chols), to_cube<double>(target_vars));
                       return from_cube<double>(covars);
                   } catch (std::invalid_argument &e) {
                       PyErr_SetString(PyExc_AssertionError, e.what());
                   }
               },
-              py::arg("epss"),py::arg("old_covar"), py::arg("target_covar")
+              py::arg("epss"),py::arg("old_chols"),py::arg("target_chols"), py::arg("target_covar")
     );
 
     bcop.def("backward", [](BatchedCovOnlyProjection* obj, dpy_arr d_vars){

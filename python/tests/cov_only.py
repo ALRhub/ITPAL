@@ -2,9 +2,9 @@ import numpy as np
 
 import cpp_projection as projection
 import time as t
-from util.sample import sample_sympd
 
 from python.util.Gaussian import Gaussian
+from python.util.sample import sample_sympd
 
 num_gaussians = 32
 dim = 5

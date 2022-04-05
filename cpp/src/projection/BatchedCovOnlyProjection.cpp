@@ -10,20 +10,28 @@ BatchedCovOnlyProjection::BatchedCovOnlyProjection(uword batch_size, uword dim, 
     openblas_set_num_threads(1);
 }
 
-cube BatchedCovOnlyProjection::forward(const vec &epss, const cube &old_covars, const cube &target_covars) {
+cube BatchedCovOnlyProjection::forward(const vec &epss, const cube &old_chols, const cube &target_chols, const cube &target_covars) {
 
-    cube covs(size(old_covars));
+    cube covs(size(old_chols));
     bool failed = false;
     std::stringstream stst;
 
-    #pragma omp parallel for default(none) schedule(static) shared(epss, old_covars, target_covars, covs, failed, stst)
+// TODO
+//    std::cout << size(old_chols) << std::endl;
+//    std::cout << size(old_chols)[0] << std::endl;
+
+    #pragma omp parallel for default(none) schedule(static) shared(epss, old_chols, target_chols, target_covars, covs, failed, stst)
     for (int i = 0; i < batch_size; ++i) {
         double eps = epss.at(i);
-        const mat &old_cov = old_covars.slice(i);
+        const mat &old_chol = old_chols.slice(i);
+        const mat &target_chol = target_chols.slice(i);
         const mat &target_cov = target_covars.slice(i);
 
-        mat occ = chol(old_cov, "lower");
-        mat tcc = chol(target_cov, "lower");
+//  TODO: transpose as python is row major and armadillo column major, hence cholesky would be triu not tril
+//        mat occ = chol(old_cov, "lower");
+//        mat tcc = chol(target_cov, "lower");
+        mat occ = trimatl(old_chol.t());
+        mat tcc = trimatl(target_chol.t());
         double kl_ = kl_cov_only(tcc, occ);
 
         if (kl_ <= eps) {
@@ -31,7 +39,8 @@ cube BatchedCovOnlyProjection::forward(const vec &epss, const cube &old_covars, 
             projection_applied.at(i) = false;
         } else {
             try {
-                mat cov = projectors[i].forward(eps, old_cov, target_cov);
+//                mat cov = projectors[i].forward(eps, old_chol, target_cov);
+                mat cov = projectors[i].forward(eps, occ, target_cov);
                 covs.slice(i) = cov;
                 projection_applied.at(i) = true;
             } catch (std::logic_error &e) {

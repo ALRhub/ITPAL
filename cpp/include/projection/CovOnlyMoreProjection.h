@@ -15,7 +15,7 @@ class CovOnlyMoreProjection{
 public:
     CovOnlyMoreProjection(uword dim, int max_eval);
 
-    mat forward(double eps, const mat &old_covar, const mat &target_covar);
+    mat forward(double eps, const mat &old_chol, const mat &target_covar);
 
     mat backward(const mat &d_cov);
 
@@ -37,7 +37,7 @@ private:
     int max_eval;
     double old_logdet, old_term, kl_const_part;
 
-    mat old_precision, old_chol_precision_t, target_precision, projected_covar, projected_precision;
+    mat old_precision, old_chol_precision_t, target_precision, projected_covar, projected_precision, old_chol_L, old_covar;
 
 };
 #endif //CPP_COVONLYMOREPROJECTION_H

@@ -18,7 +18,6 @@ vec DiagCovOnlyMoreProjection::forward(double eps, const vec &old_var, const vec
     target_prec = 1.0 / target_var;
 
     old_logdet = - 2 * sum(log(old_chol_prec + 1e-25));
-
     kl_const_part = old_logdet - dim;
 
     /** Otpimize **/
@@ -28,8 +27,8 @@ vec DiagCovOnlyMoreProjection::forward(double eps, const vec &old_var, const vec
         return ((DiagCovOnlyMoreProjection *) instance)->dual(eta, grad);}, this);
 
     std::vector<double> opt_eta;
-
     std::tie(succ, opt_eta) = NlOptUtil::opt_dual_1lp(opt, 0.0, max_eval);
+
     if (!succ) {
         opt_eta[0] = eta;
         succ = NlOptUtil::valid_despite_failure_1lp(opt_eta, grad);
@@ -59,6 +58,7 @@ vec DiagCovOnlyMoreProjection::backward(const vec &d_cov) {
 
     double eo = omega_offset + eta;
     double eo_squared = eo * eo;
+
     vec dQ_deta = (omega_offset * old_prec - target_prec) / eo_squared;
 
     vec d_Q = - projected_var % d_cov % projected_var;

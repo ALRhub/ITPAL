@@ -15,7 +15,7 @@ public:
 
     BatchedCovOnlyProjection(uword batch_size, uword dim, int max_eval);
 
-    cube forward(const vec &epss, const cube &old_covars, const cube &target_covars);
+    cube forward(const vec &epss, const cube &old_chols, const cube &target_chols, const cube &target_covars);
     cube backward(const cube &d_covs);
 
 private:
