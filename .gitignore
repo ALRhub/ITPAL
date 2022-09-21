@@ -87,3 +87,8 @@ cpp/pybind11
 cpp/cmake-build-debug
 
 plts/
+/cpp/pybind11/
+/cpp/build/
+/cpp/CppProjection.egg-info
+/cpp/dist/
+/cpp/venv/

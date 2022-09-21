@@ -47,7 +47,7 @@ mat CovOnlyMoreProjection::forward(double eps, const mat &old_chol, const mat &t
         projected_precision = (eta * old_precision + target_precision) / (eta + omega_offset);
         projected_covar = solve(projected_precision, mat(dim, dim, fill::eye ));
     } else{
-        std::cout << "Failed" << std::endl;
+//        std::cout << "Failed" << std::endl;
 //        throw std::logic_error("NLOPT failure");
         mat res = mat(dim, dim);
         res.fill(datum::nan);
