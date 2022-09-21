@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8.12)
 project(IPP)
 
 add_definitions(-std=c++11)
-#add_definitions(-stdlib=libc++)
 
 find_package(OpenMP REQUIRED)
 find_library(gfortran REQUIRED)
@@ -13,12 +12,12 @@ find_library(lapack REQUIRED)
 add_subdirectory(pybind11)
 
 #Adapt these so that armadillo and nlopt are found
-include_directories("/home/otf2rng/cpp/nlopt" "/home/otf2rng/cpp/nlopt/src/api" "/home/otf2rng/cpp/armadillo/include" "/home/otf2rng/cpp/OpenBLAS/include" "/home/otf2rng/cpp/lapack")
-link_directories("/home/otf2rng/cpp/nlopt" "/home/otf2rng/cpp/OpenBLAS/lib" "/home/otf2rng/cpp/lapack")
+include_directories(~/path/to/armadillo/include ~/path/to/nlopt/include)
+link_directories(~/path/to/nlopt/lib)
 ### END OF STUFF THE NEEDS TO BE CHANGED ##################################
 
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas")
