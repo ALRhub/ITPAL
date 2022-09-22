@@ -50,7 +50,7 @@ armadillo headers.
 Download from here https://github.com/pybind/pybind11/releases, unpack, rename to pybind11, and place the pybind11 
 folder under cpp (you can put it somewhere else but then need to adapt the CMakeLists.txt such that pybind11 is found)
 
-##### Install CppEIM package 
-go to CppEIM and run 
+##### Install package 
+go to `ITPAL/cpp/` and run 
 
-```sudo python3 setup.py install``` or ``python3 setup.py install --user``
+``python3 setup.py install --user``
