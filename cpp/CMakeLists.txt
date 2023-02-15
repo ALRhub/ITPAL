@@ -3,18 +3,14 @@ project(IPP)
 
 add_definitions(-std=c++11)
 
-find_package(OpenMP REQUIRED)
-find_library(gfortran REQUIRED)
-find_library(openblas REQUIRED)
-find_library(lapack REQUIRED)
-### FOR INSTALLATION CHANGE STUFF HERE! ###################################
-#Add pybind11 subfolder (under cpp) or change command if pybind11 installed on system
-add_subdirectory(pybind11)
+message("CPP = ${CMAKE_PREFIX_PATH}")
 
-#Adapt these so that armadillo and nlopt are found
-include_directories(~/path/to/armadillo/include ~/path/to/nlopt/include)
-link_directories(~/path/to/nlopt/lib)
-### END OF STUFF THE NEEDS TO BE CHANGED ##################################
+find_package(OpenMP REQUIRED)
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+find_package(pybind11 REQUIRED)
+find_package(Armadillo REQUIRED)
+include_directories(${ARMADILLO_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -34,7 +30,7 @@ add_library(projectionlib SHARED
         src/projection/BatchedSplitDiagMoreProjection.cpp
         src/projection/CovOnlyMoreProjection.cpp
         src/projection/BatchedCovOnlyProjection.cpp)
-target_link_libraries(projectionlib lapack gfortran nlopt)
+target_link_libraries(projectionlib nlopt ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
 pybind11_add_module(cpp_projection src/projection/PyProjection.cpp)
-target_link_libraries(cpp_projection PUBLIC lapack projectionlib)
+target_link_libraries(cpp_projection PUBLIC projectionlib)

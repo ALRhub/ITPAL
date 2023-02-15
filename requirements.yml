@@ -1,0 +1,8 @@
+conda-forge::liblapack=3.9.0
+conda-forge::gcc_linux-64=12.2.0
+conda-forge::armadillo=11.4.3
+conda-forge::cmake=3.25.2
+conda-forge::pybind11=2.10.3
+conda-forge::nlopt=2.7.1
+anaconda::openblas-devel=0.3.21
+
