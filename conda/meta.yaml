@@ -1,0 +1,54 @@
+{% set name = "cppprojection" %}
+{% set version = "1.0" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  path: "../cpp"
+
+build:
+  number: 0
+  # preserve_egg_dir: True
+  # rpaths:
+  #   - lib/
+  # run_exports:
+  #   - liblapack
+  #   - openblas-devel
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake
+    # - liblapack
+    # - armadillo
+    # - pybind11
+    # - nlopt
+    # - blas-devel
+    - libgomp
+  host:
+    - python {{ python }}
+    # - liblapack
+    - armadillo
+    - pybind11
+    - nlopt
+    - blas-devel
+  run:
+    # - python {{ python }}
+    # - {{ compiler('cxx') }}
+    # - armadillo
+    # - nlopt
+    # - blas-devel
+    - libopenblas
+    # - '_openmp_mutex'
+
+test:
+  imports:
+    - cpp_projection
+
+about:
+  home: https://palletsprojects.com/p/click/itpal/
+  license: BSD
+  license_family: BSD
+  summary: Composable command line interface toolkit
