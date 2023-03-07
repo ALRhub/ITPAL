@@ -33,9 +33,12 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      '-DCMAKE_PREFIX_PATH=' + os.environ['CONDA_PREFIX']]
+        cmake_args = [
+                    '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                      '-DPYTHON_EXECUTABLE=' + os.environ['PYTHON'],
+                      '-DCMAKE_PREFIX_PATH=' + os.environ['PREFIX'],
+                      '-DBUILD_SHARED_LIBS=ON',
+                      ]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -47,6 +50,7 @@ class CMakeBuild(build_ext):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            cmake_args.append(os.environ['CMAKE_ARGS'])
             build_args += ['--', '-j2']
 
         env = os.environ.copy()
