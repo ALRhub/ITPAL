@@ -7,9 +7,6 @@ message("CPP = ${CMAKE_PREFIX_PATH}")
 message("CIP = ${CMAKE_INSTALL_PREFIX}")
 message("CLOD = ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-# SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-
 find_package(OpenMP REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
@@ -39,8 +36,3 @@ target_link_libraries(projectionlib PUBLIC nlopt ${ARMADILLO_LIBRARIES} ${BLAS_L
 
 pybind11_add_module(cpp_projection src/projection/PyProjection.cpp)
 target_link_libraries(cpp_projection PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} projectionlib)
-
-# install(TARGETS cpp_projection
-#   COMPONENT python
-#   LIBRARY DESTINATION "${PYTHON_LIBRARY_DIR}"
-#   )
