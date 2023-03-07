@@ -23,6 +23,7 @@ requirements:
     - nlopt
     - blas-devel
   run:
+    - python {{ python }}
     - libopenblas
 
 test:
