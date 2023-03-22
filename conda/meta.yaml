@@ -15,6 +15,7 @@ requirements:
   build:
     - {{ compiler('cxx') }}
     - cmake
+    - make
     - libgomp
   host:
     - python {{ python }}
@@ -31,7 +32,6 @@ test:
     - cpp_projection
 
 about:
-  home: https://palletsprojects.com/p/click/itpal/
-  license: BSD
-  license_family: BSD
-  summary: Composable command line interface toolkit
+  home: https://alr.anthropomatik.kit.edu
+  license: MIT
+  summary: 
