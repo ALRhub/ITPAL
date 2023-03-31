@@ -8,7 +8,10 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
-
+conda = False
+if '--conda' in sys.argv:
+    conda = True
+    sys.argv.remove("--conda")
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -33,12 +36,19 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        cmake_args = [
-                    '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + os.environ['PYTHON'],
-                      '-DCMAKE_PREFIX_PATH=' + os.environ['PREFIX'],
-                      '-DBUILD_SHARED_LIBS=ON',
-                      ]
+        if conda:
+            cmake_args = [
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                '-DPYTHON_EXECUTABLE=' + os.environ['PYTHON'],
+                '-DCMAKE_PREFIX_PATH=' + os.environ['PREFIX'],
+                '-DBUILD_SHARED_LIBS=ON'
+            ]
+        else:
+            cmake_args = [
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                '-DPYTHON_EXECUTABLE=' + sys.executable,
+                '-DCMAKE_PREFIX_PATH=' + os.environ['CONDA_PREFIX']
+                ]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -50,7 +60,8 @@ class CMakeBuild(build_ext):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            cmake_args.append(os.environ['CMAKE_ARGS'])
+            if conda:
+                cmake_args.append(os.environ['CMAKE_ARGS'])
             build_args += ['--', '-j2']
 
         env = os.environ.copy()

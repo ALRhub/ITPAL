@@ -1,3 +1,3 @@
-$PYTHON -m pip install . -vv
+$PYTHON setup.py install --conda
 cp build/*/libprojectionlib.so $PREFIX/lib
 
