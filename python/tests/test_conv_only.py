@@ -1,10 +1,6 @@
-import sys
-sys.path.append('/home/hussam/Documents/Documents/Work/Workspace/ALR-HiWi/ITPAL/')
-
 import unittest
 import numpy as np
-# from python.projection.MoreProjection import MoreProjection
-from python.util.Gaussian import Gaussian
+
 from python.util.sample import sample_sympd
 from python.projection.CovOnlyMoreProjection import CovOnlyMoreProjection
 
@@ -12,51 +8,30 @@ import cpp_projection
 
 
 class TestConvOnly(unittest.TestCase):
-    # np.random.seed(0)
-    num_gaussians = 4
+    # np.random.seed(42)
     dim = 5
     eps = 0.001
 
-    old_dists = []
-    target_dists = []
-    old_covs = []
-    target_covs = []
-    for i in range(num_gaussians):
-        means = np.random.uniform(low=-0.5, high=0.5, size=dim)
-        old_covs.append(sample_sympd(dim))
-        old_dists.append(Gaussian(means, old_covs[-1]))
-        target_covs.append(sample_sympd(dim))
-        target_dists.append(Gaussian(means, target_covs[-1]))
+    means = np.random.uniform(low=-0.5, high=0.5, size=dim)
+    old_cov= sample_sympd(dim)
+    target_cov = sample_sympd(dim)
     
-    cov_only_cpp = cpp_projection.BatchedCovOnlyProjection(num_gaussians, dim, 100)
+    cov_only_cpp = cpp_projection.CovOnlyMoreProjection(dim, 100)
     cov_only_py = CovOnlyMoreProjection(dim)
 
-    old_means = np.stack([od.mean for od in old_dists])
-    old_covs = np.stack([od.covar for od in old_dists])
+    d_covs_var = np.random.normal(size=[dim, dim])
 
-    target_means = np.stack([td.mean for td in target_dists])
-    target_covs = np.stack([td.covar for td in target_dists])
-
-    
-    uc_betas = np.nan * np.ones(num_gaussians)
-    epss = eps * np.ones(num_gaussians)
-
-    d_means = np.zeros([num_gaussians, dim])  # np.random.normal(size=[num_gaussians, dim])
-    d_covs_var = np.random.normal(size=[num_gaussians, dim, dim])
-
-    grad_mean = np.zeros([num_gaussians, dim])
-
-    # epss, old_chols, target_chols,target_covars
-    covs_cpp = cov_only_cpp.forward(epss, np.linalg.cholesky(old_covs), np.linalg.cholesky(target_covs), target_covs)
+    cov_cpp = cov_only_cpp.forward(eps, np.linalg.cholesky(old_cov).T, target_cov)
     grad_cov_cpp = cov_only_cpp.backward(d_covs_var)
 
-    def test_forward_backward(self):
-        for i in range(self.num_gaussians):
-            cov_py = self.cov_only_py.more_step(self.eps, self.old_covs[i], self.target_covs[i])
-            self.assertTrue(np.allclose(cov_py, self.covs_cpp[i]))
+    cov_py = cov_only_py.more_step(eps, old_cov, target_cov)
+    grad_cov_py = cov_only_py.backward(d_covs_var)
 
-            grad_cov_py = self.cov_only_py.backward(self.d_covs_var[i])
-            self.assertTrue(np.allclose(grad_cov_py, self.grad_cov_cpp[i]))
+    def test_forward(self):
+        self.assertTrue(np.allclose(self.cov_py, self.cov_cpp))
+    
+    def test_backward(self):
+        self.assertTrue(np.allclose(self.grad_cov_py, self.grad_cov_cpp))
 
 if __name__ == '__main__':
     unittest.main()
