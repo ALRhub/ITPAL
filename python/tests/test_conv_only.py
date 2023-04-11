@@ -11,9 +11,9 @@ from python.projection.CovOnlyMoreProjection import CovOnlyMoreProjection
 import cpp_projection
 
 
-class TestSplitMoreRTProj(unittest.TestCase):
+class TestConvOnly(unittest.TestCase):
     # np.random.seed(0)
-    num_gaussians = 1
+    num_gaussians = 4
     dim = 5
     eps = 0.001
 
@@ -52,22 +52,11 @@ class TestSplitMoreRTProj(unittest.TestCase):
 
     def test_forward_backward(self):
         for i in range(self.num_gaussians):
-            # eps, beta, old_mean, old_covar, target_mean, target_covar
-            mean_py, cov_py = self.cov_only_py.more_step(self.eps, self.eps, self.old_means[i], self.old_covs[i], self.target_means[i], self.target_covs[i])
+            cov_py = self.cov_only_py.more_step(self.eps, self.old_covs[i], self.target_covs[i])
             self.assertTrue(np.allclose(cov_py, self.covs_cpp[i]))
 
-            # print(self.d_covs_var[i].shape)
-            d_mu_target, grad_cov_py = self.cov_only_py.backward(self.d_means[i], self.d_covs_var[i])
+            grad_cov_py = self.cov_only_py.backward(self.d_covs_var[i])
             self.assertTrue(np.allclose(grad_cov_py, self.grad_cov_cpp[i]))
 
 if __name__ == '__main__':
     unittest.main()
-
-    # print(covs.shape)
-    # print(grad_cov.shape)
-
-    # print("Forward")
-    # print(np.max(np.abs(covs - ref_covs)))
-
-    # print("Backward")
-    # print(np.max(np.abs(ref_grad_cov - grad_cov)))
