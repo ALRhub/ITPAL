@@ -70,6 +70,7 @@ target/
 
 # Ignore IntelliJ project folder
 .idea
+.vscode
 
 .ipynb_checkpoints
 data_sets
