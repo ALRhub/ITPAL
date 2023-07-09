@@ -16,7 +16,8 @@ requirements:
     - {{ compiler('cxx') }}
     - cmake
     - make
-    - libgomp
+    - libgomp # [linux]
+    - llvm-openmp  # [osx]
   host:
     - python {{ python }}
     - armadillo
