@@ -8,8 +8,8 @@ import cpp_projection
 
 
 class TestConvOnly(unittest.TestCase):
-    # np.random.seed(42)
-    dim = 5
+    np.random.seed(42)
+    dim = 15
     eps = 0.001
 
     means = np.random.uniform(low=-0.5, high=0.5, size=dim)

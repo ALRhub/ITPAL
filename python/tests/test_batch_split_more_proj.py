@@ -1,15 +1,12 @@
-import sys
-sys.path.append('/home/hussam/Documents/Documents/Work/Workspace/ALR-HiWi/ITPAL/')
-
 import unittest
 import numpy as np
-from python.projection.MoreProjection import MoreProjection
+from python.projection.SplitMoreProjection import SplitMoreProjection
 import cpp_projection as proj
 
-class TestSplitMoreRTProj(unittest.TestCase):
-    # np.random.seed(0)
-    dim = 5
-    batch_size = 32
+class TestBatchSplitMoreProj(unittest.TestCase):
+    np.random.seed(42)
+    dim = 15
+    batch_size = 8
 
     mean_old = np.random.uniform(low=-1, high=1, size=(batch_size, dim))
     cov_old = np.exp(np.random.uniform(low=-0.5, high=0.5, size=(batch_size, dim)))
@@ -23,9 +20,9 @@ class TestSplitMoreRTProj(unittest.TestCase):
     eps_mean = 0.1 * np.ones(batch_size)
     eps_cov = 0.01 * np.ones(batch_size)
 
-    smp = MoreProjection(dim)
+    smp = SplitMoreProjection(dim)
 
-    cpp_smp = proj.BatchedSplitDiagMoreProjection(batch_size, dim, max_eval=100)
+    cpp_smp = proj.BatchedSplitDiagMoreProjection(batch_size, dim, max_eval=10000)
     mean_proj_cpp, cov_proj_cpp = cpp_smp.forward(eps_mean, eps_cov, mean_old, cov_old, mean_target, cov_target)
     dm, dc = cpp_smp.backward(d_mean, d_cov)
 

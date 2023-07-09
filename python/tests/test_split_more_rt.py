@@ -33,8 +33,8 @@ for i in range(100):
     print(tf)
     rt.append(tf)
 
-import matplotlib.pyplot as plt
-plt.semilogy(rt)
+# import matplotlib.pyplot as plt
+# plt.semilogy(rt)
 #plt.show()
 
 print("cpp done")
