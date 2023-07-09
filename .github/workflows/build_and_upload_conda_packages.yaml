@@ -29,4 +29,5 @@ jobs:
           python-version: ${{ matrix.python-version }} # Values previously defined in `matrix`
           user: hussamalafandi
           label: dev
-          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the right name of your secret
+          overwrite: true
+          token: ${{ secrets.ANACONDA_TOKEN }} 
