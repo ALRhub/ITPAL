@@ -1,0 +1,38 @@
+{% set name = "cppprojection" %}
+{% set version = "1.0" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  path: "../cpp"
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake
+    - make
+    - libgomp # [linux]
+    - llvm-openmp  # [osx]
+  host:
+    - python {{ python }}
+    - armadillo
+    - pybind11
+    - nlopt
+    - blas-devel
+  run:
+    - python {{ python }}
+    - libopenblas
+
+test:
+  imports:
+    - cpp_projection
+
+about:
+  home: https://alr.anthropomatik.kit.edu
+  license: MIT
+  summary: 
