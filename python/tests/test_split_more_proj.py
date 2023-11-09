@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/home/hussam/Documents/Documents/Work/Workspace/ALR-HiWi/ITPAL/')
-
 import unittest
 import numpy as np
 from python.projection.SplitMoreProjection import SplitMoreProjection
