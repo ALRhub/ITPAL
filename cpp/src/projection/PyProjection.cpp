@@ -100,7 +100,7 @@ PYBIND11_MODULE(cpp_projection, p){
            py::arg("eps_mu"), py::arg("eps_sig"), py::arg("old_mean"),
            py::arg("old_var"), py::arg("target_mean"), py::arg("target_var"));
 
-    mp.def("backward", [](SplitDiagMoreProjection* obj, dpy_arr dl_dmu_projected, dpy_arr dl_dvar_projected){
+    sdcmp.def("backward", [](SplitDiagMoreProjection* obj, dpy_arr dl_dmu_projected, dpy_arr dl_dvar_projected){
                vec dl_dmu_target;
                vec dl_dvar_target;
                std::tie(dl_dmu_target, dl_dvar_target) = obj->backward(to_vec<double>(dl_dmu_projected),
