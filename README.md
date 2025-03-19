@@ -16,7 +16,7 @@ We now provide pre-built binaries that should work on all systems if:
 Download the appropriate wheel for your Python version from the [releases](https://github.com/ALRhub/ITPAL/releases) page and install with pip:
 
 ```bash
-pip install cpp_projection-{version}-cp{python_version}-manylinux2014_x86_64.whl
+pip install cpp_projection-{version}-{python_version_name}-manylinux2014_x86_64.whl
 ```
 
 ## Manual Installation (Legacy Method)
