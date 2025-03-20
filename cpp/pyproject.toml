@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "cmake>=3.12"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = []
+
+[project]
+name = "cpp_projection"
+version = "1.0.0"
+description = "ITPAL (cpp_projection) provides efficient implementations for KL-divergence based projections used in the ITPAL (Information Theoretic Projection As Layer) framework, optimized through C++ and parallelized using OpenMP. Written by Philipp Becker, installation made painless by Dominik Roth."
+authors = [
+    {name = "Philipp Becker", email = "philipp.becker@kit.edu"}
+]
+requires-python = ">=3.6"
+readme = "README.md"
