@@ -1,38 +1,121 @@
-cmake_minimum_required(VERSION 2.8.12)
-project(IPP)
+cmake_minimum_required(VERSION 3.10...3.28)
 
-add_definitions(-std=c++11)
+project(cpp_projection LANGUAGES C CXX Fortran)
 
-message("CPP = ${CMAKE_PREFIX_PATH}")
-message("CIP = ${CMAKE_INSTALL_PREFIX}")
-message("CLOD = ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+# Force static linking
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-find_package(OpenMP REQUIRED)
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
-find_package(pybind11 REQUIRED)
-find_package(Armadillo REQUIRED)
-include_directories(${ARMADILLO_INCLUDE_DIRS})
+# Get paths from build script
+set(OpenBLAS_HOME "" CACHE PATH "Path to OpenBLAS installation")
+set(LAPACK_HOME "" CACHE PATH "Path to LAPACK installation")
+set(NLOPT_HOME "" CACHE PATH "Path to NLOPT installation")
+set(ARMADILLO_INCLUDE_DIR "" CACHE PATH "Path to Armadillo headers")
+set(PYBIND11_DIR "" CACHE PATH "Path to pybind11")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -llapack")
-include_directories(include)
+# Find static libraries
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)  # Force static for OpenBLAS, LAPACK, NLOPT
 
-#Projection
-add_library(projectionlib SHARED
-        src/projection/MoreProjection.cpp
-        src/projection/BatchedProjection.cpp
-        src/projection/DiagCovOnlyMoreProjection.cpp
-        src/projection/BatchedDiagCovOnlyProjection.cpp
-        src/projection/SplitDiagMoreProjection.cpp
-        src/projection/BatchedSplitDiagMoreProjection.cpp
-        src/projection/CovOnlyMoreProjection.cpp
-        src/projection/BatchedCovOnlyProjection.cpp)
-target_link_libraries(projectionlib PUBLIC nlopt ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+find_library(OPENBLAS_LIB 
+    NAMES libopenblas.a
+    PATHS ${OpenBLAS_HOME}/lib
+    REQUIRED
+)
 
+find_library(LAPACK_LIB 
+    NAMES liblapack.a
+    PATHS ${LAPACK_HOME}/lib
+    REQUIRED
+)
+
+find_library(NLOPT_LIB 
+    NAMES libnlopt.a
+    PATHS ${NLOPT_HOME}/lib
+    REQUIRED
+)
+
+# Set OpenMP flags manually for devtoolset
+set(OpenMP_C_FLAGS "-fopenmp")
+set(OpenMP_CXX_FLAGS "-fopenmp")
+set(OpenMP_Fortran_FLAGS "-fopenmp")
+set(OpenMP_C_LIB_NAMES "gomp;pthread")
+set(OpenMP_CXX_LIB_NAMES "gomp;pthread")
+set(OpenMP_Fortran_LIB_NAMES "gomp;pthread")
+set(OpenMP_gomp_LIBRARY "/opt/rh/devtoolset-10/root/usr/lib/gcc/x86_64-redhat-linux/10/libgomp.so")
+set(OpenMP_pthread_LIBRARY "/usr/lib64/libpthread.so")
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    message(STATUS "Building with OpenMP support")
+    add_definitions(-DUSE_OPENMP)
+else()
+    message(FATAL_ERROR "OpenMP is required but not found")
+endif()
+
+# Include directories
+include_directories(
+    ${OpenBLAS_HOME}/include
+    ${LAPACK_HOME}/include
+    ${NLOPT_HOME}/include
+    ${ARMADILLO_INCLUDE_DIR}
+    include
+)
+
+# Add pybind11
+add_subdirectory(${PYBIND11_DIR} build/pybind11)
+include_directories(${PYBIND11_DIR}/include)
+
+# Build projection library
+add_library(projectionlib STATIC
+    src/projection/MoreProjection.cpp
+    src/projection/BatchedProjection.cpp
+    src/projection/DiagCovOnlyMoreProjection.cpp
+    src/projection/BatchedDiagCovOnlyProjection.cpp
+    src/projection/SplitDiagMoreProjection.cpp
+    src/projection/BatchedSplitDiagMoreProjection.cpp
+    src/projection/CovOnlyMoreProjection.cpp
+    src/projection/BatchedCovOnlyProjection.cpp
+)
+
+# Force using shared gfortran
+execute_process(
+    COMMAND gfortran -print-file-name=libgfortran.so
+    OUTPUT_VARIABLE GFORTRAN_LIB
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT EXISTS "${GFORTRAN_LIB}")
+    message(FATAL_ERROR "Could not find libgfortran.so - please install gfortran")
+endif()
+
+target_link_libraries(projectionlib PRIVATE
+    ${LAPACK_LIB}
+    ${NLOPT_LIB}
+    ${OPENBLAS_LIB}
+    ${OpenMP_gomp_LIBRARY}
+    ${OpenMP_pthread_LIBRARY}
+)
+
+target_compile_options(projectionlib PRIVATE ${OpenMP_CXX_FLAGS})
+
+# Python module
 pybind11_add_module(cpp_projection src/projection/PyProjection.cpp)
-target_link_libraries(cpp_projection PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} projectionlib)
+target_compile_options(cpp_projection PRIVATE 
+    -D__GLIBC_PREREQ=0x20011
+    -D_FORTIFY_SOURCE=0
+)
+target_link_libraries(cpp_projection PRIVATE 
+    projectionlib
+    ${LAPACK_LIB}
+    ${OPENBLAS_LIB}
+    ${GFORTRAN_LIB}
+    ${OpenMP_gomp_LIBRARY}
+    ${OpenMP_pthread_LIBRARY}
+)
+
+target_compile_options(cpp_projection PRIVATE ${OpenMP_CXX_FLAGS})
+
+# Force older GLIBC symbol versions during linking
+target_link_options(cpp_projection PRIVATE
+    "-Wl,--version-script=${CMAKE_SOURCE_DIR}/version.map"
+)
