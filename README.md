@@ -1,6 +1,6 @@
 # ITPAL
 
-ITPAL provides efficient implementations for KL-divergence based projections of Gaussians. This package focuses specifically on the projection operations, optimized through C++ and parallelized using OpenMP and provides low level bindings for them. For JAX bindings see [ITPAL_JAX](https://github.com/ALRhub/ITPAL_JAX).
+ITPAL (Information Theoretic Projection as a Layer) provides efficient implementations for KL-divergence based projections of Gaussians. This package focuses specifically on the projection operations, optimized through C++ and parallelized using OpenMP and provides low level bindings for them. For JAX bindings see [ITPAL_JAX](https://github.com/ALRhub/ITPAL_JAX).
 
 ## Installation
 
@@ -9,7 +9,7 @@ ITPAL provides efficient implementations for KL-divergence based projections of 
 We now provide pre-built binaries that should work on all systems if:
  - Hardware is 64-bit Intel or AMD and from 2009+
  - OS is Linux with glibc 2.17+ (from 2014+) following FHS (includes Ubuntu/Debian/Fedora/CentOS/...)
- - Python 3.6-3.12
+ - Python 3.6-3.13
  - gfortran 10+ is installed (e.g. `sudo apt-get install gfortran`, already installed on BwUni2 & HoReKa)
  - OpenMP is installed (optional, but increases performance of batched projections, already installed on BwUni2 & HoReKa)
 
