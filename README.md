@@ -19,7 +19,7 @@ Download the appropriate wheel for your Python version from the [releases](https
 pip install cpp_projection-{version}-{python_version_name}-manylinux2014_x86_64.whl
 ```
 
-### Building Wheels from Source
+### Building Binaries from Source
 
 This repository contains the build system for creating cpp_projection wheels with statically linked dependencies for the previously described range of systems.
 Ensure you have Docker (used for building in manylinux2014 environment) and run the build script:
