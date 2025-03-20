@@ -2,9 +2,9 @@
 
 ITPAL provides efficient implementations for KL-divergence based projections of Gaussians. This package focuses specifically on the projection operations, optimized through C++ and parallelized using OpenMP and provides low level bindings for them. For JAX bindings see [ITPAL_JAX](https://github.com/ALRhub/ITPAL_JAX).
 
-# Installation
+## Installation
 
-## From Pre-built Binaries (Recommended)
+### From Pre-built Binaries (Recommended)
 
 We now provide pre-built binaries that should work on all systems if:
  - Hardware is 64-bit Intel or AMD and from 2009+
@@ -19,40 +19,59 @@ Download the appropriate wheel for your Python version from the [releases](https
 pip install cpp_projection-{version}-{python_version_name}-manylinux2014_x86_64.whl
 ```
 
-## Manual Installation (Legacy Method)
+### Building Wheels from Source
 
-If you prefer to build from source or the pre-built binaries don't work for your system, you can follow the manual installation instructions below.
+This repository contains the build system for creating cpp_projection wheels with statically linked dependencies for the previously described range of systems.
+Ensure you have Docker (used for building in manylinux2014 environment) and run the build script:
 
-### Code Structure:
+```bash
+./build.sh
+```
 
-##### python:
-   
-contains reference implementation for non-batched projection (projection), tests (mostly central difference test of the gradients) and utility for testing 
+This will:
+- Gather and Build all dependencies (OpenBLAS, LAPACK, NLOPT, ...) statically
+- Create wheels for all supported Python versions
+- Output wheels to the `cpp/dist/` directory
+- Test all created wheels if a fitting local python version is found (tested outside container)
 
-##### cpp
-containes tuned implementation for non-batched projection (MoreProjection.cpp/h) and batched-projection
- (BatchedProjection.cpp/h). The latter uses the former and is parallelized using openmp.
- 
- Interface to python is provided using pybind11 (PyProject.cpp), conversion for numpy arrays to aramdillo vec/mat/ cube is provided
- in PyArmaConverter.h
+Then just install the generated wheels via
+```bash
+pip install cpp/dist/cpp_projection-{version}-{python_version_name}-manylinux2014_x86_64.whl
+```
 
-Note that the C++ part uses column-major layout while the python part uses row-major
+### Manual Direct Installation (Legacy Method using Conda)
 
-### Setup python
+If your system is not supported by our pre-built wheels and wheel-building process, you can resort to a manual direct installation using conda:
+
+#### Setup python
 Tested with python 3.6.8 
 
 Dependencies: numpy, nlopt
 
-### Setup c++
+#### Setup c++
 ##### 1. Install required packages and libraries 
 Install required packages into your conda environment
 
-```conda install --file requirements.yml```
+```conda install --file conda_requirements.yml```
 
 ##### 2. Install package 
-go to `ITPAL/cpp/` and run 
+go to `ITPAL/cpp/`and run 
 
-```python3 setup.py install --user```
+```bash
+mv CMakeLists_conda.txt CMakeLists.txt
+python3 setup.py install --user
+```
+
+## Python Implementations
+
+The `python/` directory contains development tools and reference implementations that are not part of the main package:
+
+- Reference implementation in vanilla Python (for testing and validation)
+- Test suite with central difference gradient tests
+- Plotting utilities for development and debugging
+- Additional development tools and utilities
+
+These tools are primarily for development and testing. If you wish to use cpp_projections directly in your own project (without e.g. ITPAL_JAX or Fancy_RL), you could also have a look at the python module for usage examples.
 
 ## License
 
