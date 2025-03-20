@@ -1,3 +1,12 @@
+# Stuff from building
+itpal_kl.*.so
+libprojectionlib.so
+.venv/
+build/
+dist/
+test_installations/
+test_installations_native/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
